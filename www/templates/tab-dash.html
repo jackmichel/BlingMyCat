@@ -1,0 +1,9 @@
+<ion-view view-title="Bling My Cat">
+  <ion-content class="padding">
+    <button class="button button-block button-energized" ng-click="addMedia()">
+      <i class="icon ion-plus-round"></i>
+      New Bling
+    </button>
+    <img ng-repeat="image in images" ng-src="{{urlForImage(image)}}" style="padding: 5px 5px 5px 5px;"/>
+  </ion-content>
+</ion-view>
