@@ -1,6 +1,8 @@
-angular.module('starter')
+angular
+  .module('starter')
+  .factory('FileService', FileService);
 
-.factory('FileService', function() {
+function FileService() {
   var images;
   var IMAGE_STORAGE_KEY = 'images';
  
@@ -24,4 +26,4 @@ angular.module('starter')
     images: getImages,
     imageCache: images
   }
-});
+}

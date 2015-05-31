@@ -1,7 +1,8 @@
-angular.module('starter')
+angular
+  .module('starter')
+  .controller('ImageController', ImageController);
 
-.controller('ImageController', function($timeout, $scope, $cordovaDevice, $cordovaFile, $ionicPlatform, $ionicActionSheet, ImageService, FileService) {
- 
+function ImageController($timeout, $scope, $cordovaDevice, $cordovaFile, $ionicPlatform, $ionicActionSheet, ImageService, FileService) {
   $ionicPlatform.ready(function() {
     $scope.images = FileService.images();
     $timeout(function() {
@@ -34,4 +35,4 @@ angular.module('starter')
       $scope.$apply();
     });
   }
-});
+}

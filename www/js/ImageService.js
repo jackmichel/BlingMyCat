@@ -1,7 +1,8 @@
-angular.module('starter')
-
-.factory('ImageService', function($cordovaCamera, FileService, $q, $cordovaFile) {
+angular
+  .module('starter')
+  .factory('ImageService', ImageService);
  
+function ImageService($cordovaCamera, FileService, $q, $cordovaFile) {
   function makeid() {
     var text = '';
     var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -56,4 +57,4 @@ angular.module('starter')
   return {
     handleMediaDialog: saveMedia
   }
-});
+}

@@ -1,5 +1,7 @@
-angular.module('starter')
+angular
+  .module('starter')
+  .controller('BlingDetailController', BlingDetailController);
 
-.controller('BlingDetailController', function($scope, $stateParams, FileService, $cordovaFile) {
+function BlingDetailController($scope, $stateParams, FileService, $cordovaFile) {
   $scope.currentImage = cordova.file.dataDirectory + $stateParams.image;
-});
+}
