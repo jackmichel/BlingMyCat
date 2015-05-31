@@ -5,6 +5,8 @@
     "ionic": "driftyco/ionic-bower#1.0.0"
   },
   "dependencies": {
-    "ngCordova": "~0.1.15-alpha"
+    "ngCordova": "~0.1.15-alpha",
+    "jquery": "~1.11.1",
+    "fabric": "~1.5.0"
   }
 }

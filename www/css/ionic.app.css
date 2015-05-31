@@ -7678,3 +7678,7 @@ a.button {
 .row {
   -webkit-flex-wrap: wrap;
   flex-wrap: wrap; }
+
+.exit-photo-edit {
+  font-size: 24px;
+  color: #000; }

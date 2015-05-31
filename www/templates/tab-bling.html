@@ -6,7 +6,7 @@
     </button>
     <div class="row wrap-row">
       <div class="col col-33" ng-repeat="image in images">
-        <a href="#/tab/bling/{{image}}">
+        <a nav-transition="ios" nav-direction="forward" href="#/bling-detail/{{image}}">
           <img class="col" ng-src="{{urlForImage(image)}}"/>       
         </a>
       </div>

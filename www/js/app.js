@@ -47,15 +47,6 @@ angular.module('starter', ['ionic', 'ngCordova'])
       }
     }
   })
-  .state('tab.bling-detail', {
-    url: '/bling/:image',
-    views: {
-      'tab-bling': {
-        templateUrl: 'templates/tab-bling-detail.html',
-        controller: 'BlingDetailController'
-      }
-    }
-  })
 
   .state('tab.account', {
     url: '/account',
@@ -65,6 +56,12 @@ angular.module('starter', ['ionic', 'ngCordova'])
         controller: 'AccountCtrl'
       }
     }
+  })
+
+  .state('bling-detail', {
+    url: '/bling-detail/:image',
+    templateUrl: 'templates/bling-detail.html',
+    controller: 'BlingDetailController'
   });
 
   // if none of the above states are matched, use this as the fallback
