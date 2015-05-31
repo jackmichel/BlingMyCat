@@ -1,4 +1,4 @@
-/* build: `node build.js modules=ALL exclude=gestures,json minifier=uglifyjs` */
+/* build: `node build.js modules=text,gestures,easing,freedrawing,interaction,serialization,image_filters,gradient,pattern,shadow minifier=uglifyjs` */
 /*! Fabric.js Copyright 2008-2015, Printio (Juriy Zaytsev, Maxim Chernyak) */
 
 var fabric = fabric || { version: "1.5.0" };
@@ -58,8 +58,2454 @@ fabric.SHARED_ATTRIBUTES = [
  */
 fabric.DPI = 96;
 fabric.reNum = '(?:[-+]?(?:\\d+|\\d*\\.\\d+)(?:e[-+]?\\d+)?)';
+/*
+    json2.js
+    2014-02-04
+
+    Public Domain.
+
+    NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+
+    See http://www.JSON.org/js.html
 
 
+    This code should be minified before deployment.
+    See http://javascript.crockford.com/jsmin.html
+
+    USE YOUR OWN COPY. IT IS EXTREMELY UNWISE TO LOAD CODE FROM SERVERS YOU DO
+    NOT CONTROL.
+
+
+    This file creates a global JSON object containing two methods: stringify
+    and parse.
+
+        JSON.stringify(value, replacer, space)
+            value       any JavaScript value, usually an object or array.
+
+            replacer    an optional parameter that determines how object
+                        values are stringified for objects. It can be a
+                        function or an array of strings.
+
+            space       an optional parameter that specifies the indentation
+                        of nested structures. If it is omitted, the text will
+                        be packed without extra whitespace. If it is a number,
+                        it will specify the number of spaces to indent at each
+                        level. If it is a string (such as '\t' or '&nbsp;'),
+                        it contains the characters used to indent at each level.
+
+            This method produces a JSON text from a JavaScript value.
+
+            When an object value is found, if the object contains a toJSON
+            method, its toJSON method will be called and the result will be
+            stringified. A toJSON method does not serialize: it returns the
+            value represented by the name/value pair that should be serialized,
+            or undefined if nothing should be serialized. The toJSON method
+            will be passed the key associated with the value, and this will be
+            bound to the value
+
+            For example, this would serialize Dates as ISO strings.
+
+                Date.prototype.toJSON = function (key) {
+                    function f(n) {
+                        // Format integers to have at least two digits.
+                        return n < 10 ? '0' + n : n;
+                    }
+
+                    return this.getUTCFullYear()   + '-' +
+                         f(this.getUTCMonth() + 1) + '-' +
+                         f(this.getUTCDate())      + 'T' +
+                         f(this.getUTCHours())     + ':' +
+                         f(this.getUTCMinutes())   + ':' +
+                         f(this.getUTCSeconds())   + 'Z';
+                };
+
+            You can provide an optional replacer method. It will be passed the
+            key and value of each member, with this bound to the containing
+            object. The value that is returned from your method will be
+            serialized. If your method returns undefined, then the member will
+            be excluded from the serialization.
+
+            If the replacer parameter is an array of strings, then it will be
+            used to select the members to be serialized. It filters the results
+            such that only members with keys listed in the replacer array are
+            stringified.
+
+            Values that do not have JSON representations, such as undefined or
+            functions, will not be serialized. Such values in objects will be
+            dropped; in arrays they will be replaced with null. You can use
+            a replacer function to replace those with JSON values.
+            JSON.stringify(undefined) returns undefined.
+
+            The optional space parameter produces a stringification of the
+            value that is filled with line breaks and indentation to make it
+            easier to read.
+
+            If the space parameter is a non-empty string, then that string will
+            be used for indentation. If the space parameter is a number, then
+            the indentation will be that many spaces.
+
+            Example:
+
+            text = JSON.stringify(['e', {pluribus: 'unum'}]);
+            // text is '["e",{"pluribus":"unum"}]'
+
+
+            text = JSON.stringify(['e', {pluribus: 'unum'}], null, '\t');
+            // text is '[\n\t"e",\n\t{\n\t\t"pluribus": "unum"\n\t}\n]'
+
+            text = JSON.stringify([new Date()], function (key, value) {
+                return this[key] instanceof Date ?
+                    'Date(' + this[key] + ')' : value;
+            });
+            // text is '["Date(---current time---)"]'
+
+
+        JSON.parse(text, reviver)
+            This method parses a JSON text to produce an object or array.
+            It can throw a SyntaxError exception.
+
+            The optional reviver parameter is a function that can filter and
+            transform the results. It receives each of the keys and values,
+            and its return value is used instead of the original value.
+            If it returns what it received, then the structure is not modified.
+            If it returns undefined then the member is deleted.
+
+            Example:
+
+            // Parse the text. Values that look like ISO date strings will
+            // be converted to Date objects.
+
+            myData = JSON.parse(text, function (key, value) {
+                var a;
+                if (typeof value === 'string') {
+                    a =
+/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)Z$/.exec(value);
+                    if (a) {
+                        return new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4],
+                            +a[5], +a[6]));
+                    }
+                }
+                return value;
+            });
+
+            myData = JSON.parse('["Date(09/09/2001)"]', function (key, value) {
+                var d;
+                if (typeof value === 'string' &&
+                        value.slice(0, 5) === 'Date(' &&
+                        value.slice(-1) === ')') {
+                    d = new Date(value.slice(5, -1));
+                    if (d) {
+                        return d;
+                    }
+                }
+                return value;
+            });
+
+
+    This is a reference implementation. You are free to copy, modify, or
+    redistribute.
+*/
+
+/*jslint evil: true, regexp: true */
+
+/*members "", "\b", "\t", "\n", "\f", "\r", "\"", JSON, "\\", apply,
+    call, charCodeAt, getUTCDate, getUTCFullYear, getUTCHours,
+    getUTCMinutes, getUTCMonth, getUTCSeconds, hasOwnProperty, join,
+    lastIndex, length, parse, prototype, push, replace, slice, stringify,
+    test, toJSON, toString, valueOf
+*/
+
+
+// Create a JSON object only if one does not already exist. We create the
+// methods in a closure to avoid creating global variables.
+
+if (typeof JSON !== 'object') {
+    JSON = {};
+}
+
+(function () {
+    'use strict';
+
+    function f(n) {
+        // Format integers to have at least two digits.
+        return n < 10 ? '0' + n : n;
+    }
+
+    if (typeof Date.prototype.toJSON !== 'function') {
+
+        Date.prototype.toJSON = function () {
+
+            return isFinite(this.valueOf())
+                ? this.getUTCFullYear()     + '-' +
+                    f(this.getUTCMonth() + 1) + '-' +
+                    f(this.getUTCDate())      + 'T' +
+                    f(this.getUTCHours())     + ':' +
+                    f(this.getUTCMinutes())   + ':' +
+                    f(this.getUTCSeconds())   + 'Z'
+                : null;
+        };
+
+        String.prototype.toJSON      =
+            Number.prototype.toJSON  =
+            Boolean.prototype.toJSON = function () {
+                return this.valueOf();
+            };
+    }
+
+    var cx,
+        escapable,
+        gap,
+        indent,
+        meta,
+        rep;
+
+
+    function quote(string) {
+
+// If the string contains no control characters, no quote characters, and no
+// backslash characters, then we can safely slap some quotes around it.
+// Otherwise we must also replace the offending characters with safe escape
+// sequences.
+
+        escapable.lastIndex = 0;
+        return escapable.test(string) ? '"' + string.replace(escapable, function (a) {
+            var c = meta[a];
+            return typeof c === 'string'
+                ? c
+                : '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+        }) + '"' : '"' + string + '"';
+    }
+
+
+    function str(key, holder) {
+
+// Produce a string from holder[key].
+
+        var i,          // The loop counter.
+            k,          // The member key.
+            v,          // The member value.
+            length,
+            mind = gap,
+            partial,
+            value = holder[key];
+
+// If the value has a toJSON method, call it to obtain a replacement value.
+
+        if (value && typeof value === 'object' &&
+                typeof value.toJSON === 'function') {
+            value = value.toJSON(key);
+        }
+
+// If we were called with a replacer function, then call the replacer to
+// obtain a replacement value.
+
+        if (typeof rep === 'function') {
+            value = rep.call(holder, key, value);
+        }
+
+// What happens next depends on the value's type.
+
+        switch (typeof value) {
+        case 'string':
+            return quote(value);
+
+        case 'number':
+
+// JSON numbers must be finite. Encode non-finite numbers as null.
+
+            return isFinite(value) ? String(value) : 'null';
+
+        case 'boolean':
+        case 'null':
+
+// If the value is a boolean or null, convert it to a string. Note:
+// typeof null does not produce 'null'. The case is included here in
+// the remote chance that this gets fixed someday.
+
+            return String(value);
+
+// If the type is 'object', we might be dealing with an object or an array or
+// null.
+
+        case 'object':
+
+// Due to a specification blunder in ECMAScript, typeof null is 'object',
+// so watch out for that case.
+
+            if (!value) {
+                return 'null';
+            }
+
+// Make an array to hold the partial results of stringifying this object value.
+
+            gap += indent;
+            partial = [];
+
+// Is the value an array?
+
+            if (Object.prototype.toString.apply(value) === '[object Array]') {
+
+// The value is an array. Stringify every element. Use null as a placeholder
+// for non-JSON values.
+
+                length = value.length;
+                for (i = 0; i < length; i += 1) {
+                    partial[i] = str(i, value) || 'null';
+                }
+
+// Join all of the elements together, separated with commas, and wrap them in
+// brackets.
+
+                v = partial.length === 0
+                    ? '[]'
+                    : gap
+                    ? '[\n' + gap + partial.join(',\n' + gap) + '\n' + mind + ']'
+                    : '[' + partial.join(',') + ']';
+                gap = mind;
+                return v;
+            }
+
+// If the replacer is an array, use it to select the members to be stringified.
+
+            if (rep && typeof rep === 'object') {
+                length = rep.length;
+                for (i = 0; i < length; i += 1) {
+                    if (typeof rep[i] === 'string') {
+                        k = rep[i];
+                        v = str(k, value);
+                        if (v) {
+                            partial.push(quote(k) + (gap ? ': ' : ':') + v);
+                        }
+                    }
+                }
+            } else {
+
+// Otherwise, iterate through all of the keys in the object.
+
+                for (k in value) {
+                    if (Object.prototype.hasOwnProperty.call(value, k)) {
+                        v = str(k, value);
+                        if (v) {
+                            partial.push(quote(k) + (gap ? ': ' : ':') + v);
+                        }
+                    }
+                }
+            }
+
+// Join all of the member texts together, separated with commas,
+// and wrap them in braces.
+
+            v = partial.length === 0
+                ? '{}'
+                : gap
+                ? '{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}'
+                : '{' + partial.join(',') + '}';
+            gap = mind;
+            return v;
+        }
+    }
+
+// If the JSON object does not yet have a stringify method, give it one.
+
+    if (typeof JSON.stringify !== 'function') {
+        escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
+        meta = {    // table of character substitutions
+            '\b': '\\b',
+            '\t': '\\t',
+            '\n': '\\n',
+            '\f': '\\f',
+            '\r': '\\r',
+            '"' : '\\"',
+            '\\': '\\\\'
+        };
+        JSON.stringify = function (value, replacer, space) {
+
+// The stringify method takes a value and an optional replacer, and an optional
+// space parameter, and returns a JSON text. The replacer can be a function
+// that can replace values, or an array of strings that will select the keys.
+// A default replacer method can be provided. Use of the space parameter can
+// produce text that is more easily readable.
+
+            var i;
+            gap = '';
+            indent = '';
+
+// If the space parameter is a number, make an indent string containing that
+// many spaces.
+
+            if (typeof space === 'number') {
+                for (i = 0; i < space; i += 1) {
+                    indent += ' ';
+                }
+
+// If the space parameter is a string, it will be used as the indent string.
+
+            } else if (typeof space === 'string') {
+                indent = space;
+            }
+
+// If there is a replacer, it must be a function or an array.
+// Otherwise, throw an error.
+
+            rep = replacer;
+            if (replacer && typeof replacer !== 'function' &&
+                    (typeof replacer !== 'object' ||
+                    typeof replacer.length !== 'number')) {
+                throw new Error('JSON.stringify');
+            }
+
+// Make a fake root object containing our value under the key of ''.
+// Return the result of stringifying the value.
+
+            return str('', {'': value});
+        };
+    }
+
+
+// If the JSON object does not yet have a parse method, give it one.
+
+    if (typeof JSON.parse !== 'function') {
+        cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
+        JSON.parse = function (text, reviver) {
+
+// The parse method takes a text and an optional reviver function, and returns
+// a JavaScript value if the text is a valid JSON text.
+
+            var j;
+
+            function walk(holder, key) {
+
+// The walk method is used to recursively walk the resulting structure so
+// that modifications can be made.
+
+                var k, v, value = holder[key];
+                if (value && typeof value === 'object') {
+                    for (k in value) {
+                        if (Object.prototype.hasOwnProperty.call(value, k)) {
+                            v = walk(value, k);
+                            if (v !== undefined) {
+                                value[k] = v;
+                            } else {
+                                delete value[k];
+                            }
+                        }
+                    }
+                }
+                return reviver.call(holder, key, value);
+            }
+
+
+// Parsing happens in four stages. In the first stage, we replace certain
+// Unicode characters with escape sequences. JavaScript handles many characters
+// incorrectly, either silently deleting them, or treating them as line endings.
+
+            text = String(text);
+            cx.lastIndex = 0;
+            if (cx.test(text)) {
+                text = text.replace(cx, function (a) {
+                    return '\\u' +
+                        ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+                });
+            }
+
+// In the second stage, we run the text against regular expressions that look
+// for non-JSON patterns. We are especially concerned with '()' and 'new'
+// because they can cause invocation, and '=' because it can cause mutation.
+// But just to be safe, we want to reject all unexpected forms.
+
+// We split the second stage into 4 regexp operations in order to work around
+// crippling inefficiencies in IE's and Safari's regexp engines. First we
+// replace the JSON backslash pairs with '@' (a non-JSON character). Second, we
+// replace all simple value tokens with ']' characters. Third, we delete all
+// open brackets that follow a colon or comma or that begin the text. Finally,
+// we look to see that the remaining characters are only whitespace or ']' or
+// ',' or ':' or '{' or '}'. If that is so, then the text is safe for eval.
+
+            if (/^[\],:{}\s]*$/
+                    .test(text.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, '@')
+                        .replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']')
+                        .replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
+
+// In the third stage we use the eval function to compile the text into a
+// JavaScript structure. The '{' operator is subject to a syntactic ambiguity
+// in JavaScript: it can begin a block or an object literal. We wrap the text
+// in parens to eliminate the ambiguity.
+
+                j = eval('(' + text + ')');
+
+// In the optional fourth stage, we recursively walk the new structure, passing
+// each name/value pair to a reviver function for possible transformation.
+
+                return typeof reviver === 'function'
+                    ? walk({'': j}, '')
+                    : j;
+            }
+
+// If the text is not JSON parseable, then a SyntaxError is thrown.
+
+            throw new SyntaxError('JSON.parse');
+        };
+    }
+}());
+/*:
+  ----------------------------------------------------
+  event.js : 1.1.5 : 2014/02/12 : MIT License
+  ----------------------------------------------------
+  https://github.com/mudcube/Event.js
+  ----------------------------------------------------
+  1  : click, dblclick, dbltap
+  1+ : tap, longpress, drag, swipe
+  2+ : pinch, rotate
+     : mousewheel, devicemotion, shake
+  ----------------------------------------------------
+  Ideas for the future
+  ----------------------------------------------------
+  * GamePad, and other input abstractions.
+  * Event batching - i.e. for every x fingers down a new gesture is created.
+  ----------------------------------------------------
+  http://www.w3.org/TR/2011/WD-touch-events-20110505/
+  ----------------------------------------------------
+*/
+
+if (typeof(eventjs) === "undefined") var eventjs = {};
+
+(function(root) { "use strict";
+
+// Add custom *EventListener commands to HTMLElements (set false to prevent funkiness).
+root.modifyEventListener = false;
+
+// Add bulk *EventListener commands on NodeLists from querySelectorAll and others  (set false to prevent funkiness).
+root.modifySelectors = false;
+
+root.configure = function(conf) {
+  if (isFinite(conf.modifyEventListener)) root.modifyEventListener = conf.modifyEventListener;
+  if (isFinite(conf.modifySelectors)) root.modifySelectors = conf.modifySelectors;
+  /// Augment event listeners
+  if (eventListenersAgumented === false && root.modifyEventListener) {
+    augmentEventListeners();
+  }
+  if (selectorsAugmented === false && root.modifySelectors) {
+    augmentSelectors();
+  }
+};
+
+// Event maintenance.
+root.add = function(target, type, listener, configure) {
+  return eventManager(target, type, listener, configure, "add");
+};
+
+root.remove = function(target, type, listener, configure) {
+  return eventManager(target, type, listener, configure, "remove");
+};
+
+root.returnFalse = function(event) {
+  return false;
+};
+
+root.stop = function(event) {
+  if (!event) return;
+  if (event.stopPropagation) event.stopPropagation();
+  event.cancelBubble = true; // <= IE8
+  event.cancelBubbleCount = 0;
+};
+
+root.prevent = function(event) {
+  if (!event) return;
+  if (event.preventDefault) {
+    event.preventDefault();
+  } else if (event.preventManipulation) {
+    event.preventManipulation(); // MS
+  } else {
+    event.returnValue = false; // <= IE8
+  }
+};
+
+root.cancel = function(event) {
+  root.stop(event);
+  root.prevent(event);
+};
+
+root.blur = function() { // Blurs the focused element. Useful when using eventjs.cancel as canceling will prevent focused elements from being blurred.
+  var node = document.activeElement;
+  if (!node) return;
+  var nodeName = document.activeElement.nodeName;
+  if (nodeName === "INPUT" || nodeName === "TEXTAREA" || node.contentEditable === "true") {
+    if (node.blur) node.blur();
+  }
+};
+
+// Check whether event is natively supported (via @kangax)
+root.getEventSupport = function (target, type) {
+  if (typeof(target) === "string") {
+    type = target;
+    target = window;
+  }
+  type = "on" + type;
+  if (type in target) return true;
+  if (!target.setAttribute) target = document.createElement("div");
+  if (target.setAttribute && target.removeAttribute) {
+    target.setAttribute(type, "");
+    var isSupported = typeof target[type] === "function";
+    if (typeof target[type] !== "undefined") target[type] = null;
+    target.removeAttribute(type);
+    return isSupported;
+  }
+};
+
+var clone = function (obj) {
+  if (!obj || typeof (obj) !== 'object') return obj;
+  var temp = new obj.constructor();
+  for (var key in obj) {
+    if (!obj[key] || typeof (obj[key]) !== 'object') {
+      temp[key] = obj[key];
+    } else { // clone sub-object
+      temp[key] = clone(obj[key]);
+    }
+  }
+  return temp;
+};
+
+/// Handle custom *EventListener commands.
+var eventManager = function(target, type, listener, configure, trigger, fromOverwrite) {
+  configure = configure || {};
+  // Check whether target is a configuration variable;
+  if (String(target) === "[object Object]") {
+    var data = target;
+    target = data.target; delete data.target;
+    ///
+    if (data.type && data.listener) {
+      type = data.type; delete data.type;
+      listener = data.listener; delete data.listener;
+      for (var key in data) {
+        configure[key] = data[key];
+      }
+    } else { // specialness
+      for (var param in data) {
+        var value = data[param];
+        if (typeof(value) === "function") continue;
+        configure[param] = value;
+      }
+      ///
+      var ret = {};
+      for (var key in data) {
+        var param = key.split(",");
+        var o = data[key];
+        var conf = {};
+        for (var k in configure) { // clone base configuration
+          conf[k] = configure[k];
+        }
+        ///
+        if (typeof(o) === "function") { // without configuration
+          var listener = o;
+        } else if (typeof(o.listener) === "function") { // with configuration
+          var listener = o.listener;
+          for (var k in o) { // merge configure into base configuration
+            if (typeof(o[k]) === "function") continue;
+            conf[k] = o[k];
+          }
+        } else { // not a listener
+          continue;
+        }
+        ///
+        for (var n = 0; n < param.length; n ++) {
+          ret[key] = eventjs.add(target, param[n], listener, conf, trigger);
+        }
+      }
+      return ret;
+    }
+  }
+  ///
+  if (!target || !type || !listener) return;
+  // Check for element to load on interval (before onload).
+  if (typeof(target) === "string" && type === "ready") {
+    if (window.eventjs_stallOnReady) { /// force stall for scripts to load
+      type = "load";
+      target = window;
+    } else { //
+      var time = (new Date()).getTime();
+      var timeout = configure.timeout;
+      var ms = configure.interval || 1000 / 60;
+      var interval = window.setInterval(function() {
+        if ((new Date()).getTime() - time > timeout) {
+          window.clearInterval(interval);
+        }
+        if (document.querySelector(target)) {
+          window.clearInterval(interval);
+          setTimeout(listener, 1);
+        }
+      }, ms);
+      return;
+    }
+  }
+  // Get DOM element from Query Selector.
+  if (typeof(target) === "string") {
+    target = document.querySelectorAll(target);
+    if (target.length === 0) return createError("Missing target on listener!", arguments); // No results.
+    if (target.length === 1) { // Single target.
+      target = target[0];
+    }
+  }
+
+  /// Handle multiple targets.
+  var event;
+  var events = {};
+  if (target.length > 0 && target !== window) {
+    for (var n0 = 0, length0 = target.length; n0 < length0; n0 ++) {
+      event = eventManager(target[n0], type, listener, clone(configure), trigger);
+      if (event) events[n0] = event;
+    }
+    return createBatchCommands(events);
+  }
+
+  /// Check for multiple events in one string.
+  if (typeof(type) === "string") {
+    type = type.toLowerCase();
+    if (type.indexOf(" ") !== -1) {
+      type = type.split(" ");
+    } else if (type.indexOf(",") !== -1) {
+      type = type.split(",");
+    }
+  }
+
+  /// Attach or remove multiple events associated with a target.
+  if (typeof(type) !== "string") { // Has multiple events.
+    if (typeof(type.length) === "number") { // Handle multiple listeners glued together.
+      for (var n1 = 0, length1 = type.length; n1 < length1; n1 ++) { // Array [type]
+        event = eventManager(target, type[n1], listener, clone(configure), trigger);
+        if (event) events[type[n1]] = event;
+      }
+    } else { // Handle multiple listeners.
+      for (var key in type) { // Object {type}
+        if (typeof(type[key]) === "function") { // without configuration.
+          event = eventManager(target, key, type[key], clone(configure), trigger);
+        } else { // with configuration.
+          event = eventManager(target, key, type[key].listener, clone(type[key]), trigger);
+        }
+        if (event) events[key] = event;
+      }
+    }
+    return createBatchCommands(events);
+  } else if (type.indexOf("on") === 0) { // to support things like "onclick" instead of "click"
+    type = type.substr(2);
+  }
+
+  // Ensure listener is a function.
+  if (typeof(target) !== "object") return createError("Target is not defined!", arguments);
+  if (typeof(listener) !== "function") return createError("Listener is not a function!", arguments);
+
+  // Generate a unique wrapper identifier.
+  var useCapture = configure.useCapture || false;
+  var id = getID(target) + "." + getID(listener) + "." + (useCapture ? 1 : 0);
+  // Handle the event.
+  if (root.Gesture && root.Gesture._gestureHandlers[type]) { // Fire custom event.
+    id = type + id;
+    if (trigger === "remove") { // Remove event listener.
+      if (!wrappers[id]) return; // Already removed.
+      wrappers[id].remove();
+      delete wrappers[id];
+    } else if (trigger === "add") { // Attach event listener.
+      if (wrappers[id]) {
+        wrappers[id].add();
+        return wrappers[id]; // Already attached.
+      }
+      // Retains "this" orientation.
+      if (configure.useCall && !root.modifyEventListener) {
+        var tmp = listener;
+        listener = function(event, self) {
+          for (var key in self) event[key] = self[key];
+          return tmp.call(target, event);
+        };
+      }
+      // Create listener proxy.
+      configure.gesture = type;
+      configure.target = target;
+      configure.listener = listener;
+      configure.fromOverwrite = fromOverwrite;
+      // Record wrapper.
+      wrappers[id] = root.proxy[type](configure);
+    }
+    return wrappers[id];
+  } else { // Fire native event.
+    var eventList = getEventList(type);
+    for (var n = 0, eventId; n < eventList.length; n ++) {
+      type = eventList[n];
+      eventId = type + "." + id;
+      if (trigger === "remove") { // Remove event listener.
+        if (!wrappers[eventId]) continue; // Already removed.
+        target[remove](type, listener, useCapture);
+        delete wrappers[eventId];
+      } else if (trigger === "add") { // Attach event listener.
+        if (wrappers[eventId]) return wrappers[eventId]; // Already attached.
+        target[add](type, listener, useCapture);
+        // Record wrapper.
+        wrappers[eventId] = {
+          id: eventId,
+          type: type,
+          target: target,
+          listener: listener,
+          remove: function() {
+            for (var n = 0; n < eventList.length; n ++) {
+              root.remove(target, eventList[n], listener, configure);
+            }
+          }
+        };
+      }
+    }
+    return wrappers[eventId];
+  }
+};
+
+/// Perform batch actions on multiple events.
+var createBatchCommands = function(events) {
+  return {
+    remove: function() { // Remove multiple events.
+      for (var key in events) {
+        events[key].remove();
+      }
+    },
+    add: function() { // Add multiple events.
+      for (var key in events) {
+        events[key].add();
+      }
+    }
+  };
+};
+
+/// Display error message in console.
+var createError = function(message, data) {
+  if (typeof(console) === "undefined") return;
+  if (typeof(console.error) === "undefined") return;
+  console.error(message, data);
+};
+
+/// Handle naming discrepancies between platforms.
+var pointerDefs = {
+  "msPointer": [ "MSPointerDown", "MSPointerMove", "MSPointerUp" ],
+  "touch": [ "touchstart", "touchmove", "touchend" ],
+  "mouse": [ "mousedown", "mousemove", "mouseup" ]
+};
+
+var pointerDetect = {
+  // MSPointer
+  "MSPointerDown": 0,
+  "MSPointerMove": 1,
+  "MSPointerUp": 2,
+  // Touch
+  "touchstart": 0,
+  "touchmove": 1,
+  "touchend": 2,
+  // Mouse
+  "mousedown": 0,
+  "mousemove": 1,
+  "mouseup": 2
+};
+
+var getEventSupport = (function() {
+  root.supports = {};
+  if (window.navigator.msPointerEnabled) {
+    root.supports.msPointer = true;
+  }
+  if (root.getEventSupport("touchstart")) {
+    root.supports.touch = true;
+  }
+  if (root.getEventSupport("mousedown")) {
+    root.supports.mouse = true;
+  }
+})();
+
+var getEventList = (function() {
+  return function(type) {
+    var prefix = document.addEventListener ? "" : "on"; // IE
+    var idx = pointerDetect[type];
+    if (isFinite(idx)) {
+      var types = [];
+      for (var key in root.supports) {
+        types.push(prefix + pointerDefs[key][idx]);
+      }
+      return types;
+    } else {
+      return [ prefix + type ];
+    }
+  };
+})();
+
+/// Event wrappers to keep track of all events placed in the window.
+var wrappers = {};
+var counter = 0;
+var getID = function(object) {
+  if (object === window) return "#window";
+  if (object === document) return "#document";
+  if (!object.uniqueID) object.uniqueID = "e" + counter ++;
+  return object.uniqueID;
+};
+
+/// Detect platforms native *EventListener command.
+var add = document.addEventListener ? "addEventListener" : "attachEvent";
+var remove = document.removeEventListener ? "removeEventListener" : "detachEvent";
+
+/*
+  Pointer.js
+  ----------------------------------------
+  Modified from; https://github.com/borismus/pointer.js
+*/
+
+root.createPointerEvent = function (event, self, preventRecord) {
+  var eventName = self.gesture;
+  var target = self.target;
+  var pts = event.changedTouches || root.proxy.getCoords(event);
+  if (pts.length) {
+    var pt = pts[0];
+    self.pointers = preventRecord ? [] : pts;
+    self.pageX = pt.pageX;
+    self.pageY = pt.pageY;
+    self.x = self.pageX;
+    self.y = self.pageY;
+  }
+  ///
+  var newEvent = document.createEvent("Event");
+  newEvent.initEvent(eventName, true, true);
+  newEvent.originalEvent = event;
+  for (var k in self) {
+    if (k === "target") continue;
+    newEvent[k] = self[k];
+  }
+  ///
+  var type = newEvent.type;
+  if (root.Gesture && root.Gesture._gestureHandlers[type]) { // capture custom events.
+//    target.dispatchEvent(newEvent);
+    self.oldListener.call(target, newEvent, self, false);
+  }
+};
+
+var eventListenersAgumented = false;
+var augmentEventListeners = function() {
+  /// Allows *EventListener to use custom event proxies.
+  if (!window.HTMLElement) return;
+  var augmentEventListener = function(proto) {
+    var recall = function(trigger) { // overwrite native *EventListener's
+      var handle = trigger + "EventListener";
+      var handler = proto[handle];
+      proto[handle] = function (type, listener, useCapture) {
+        if (root.Gesture && root.Gesture._gestureHandlers[type]) { // capture custom events.
+          var configure = useCapture;
+          if (typeof(useCapture) === "object") {
+            configure.useCall = true;
+          } else { // convert to configuration object.
+            configure = {
+              useCall: true,
+              useCapture: useCapture
+            };
+          }
+          eventManager(this, type, listener, configure, trigger, true);
+//          handler.call(this, type, listener, useCapture);
+        } else { // use native function.
+          var types = getEventList(type);
+          for (var n = 0; n < types.length; n ++) {
+            handler.call(this, types[n], listener, useCapture);
+          }
+        }
+      };
+    };
+    recall("add");
+    recall("remove");
+  };
+  // NOTE: overwriting HTMLElement doesn't do anything in Firefox.
+  if (navigator.userAgent.match(/Firefox/)) {
+    // TODO: fix Firefox for the general case.
+    augmentEventListener(HTMLDivElement.prototype);
+    augmentEventListener(HTMLCanvasElement.prototype);
+  } else {
+    augmentEventListener(HTMLElement.prototype);
+  }
+  augmentEventListener(document);
+  augmentEventListener(window);
+};
+
+var selectorsAugmented = false;
+var augmentSelectors = function() {
+/// Allows querySelectorAll and other NodeLists to perform *EventListener commands in bulk.
+  var proto = NodeList.prototype;
+  proto.removeEventListener = function(type, listener, useCapture) {
+    for (var n = 0, length = this.length; n < length; n ++) {
+      this[n].removeEventListener(type, listener, useCapture);
+    }
+  };
+  proto.addEventListener = function(type, listener, useCapture) {
+    for (var n = 0, length = this.length; n < length; n ++) {
+      this[n].addEventListener(type, listener, useCapture);
+    }
+  };
+};
+
+return root;
+
+})(eventjs);
+
+/*:
+  ----------------------------------------------------
+  eventjs.proxy : 0.4.2 : 2013/07/17 : MIT License
+  ----------------------------------------------------
+  https://github.com/mudcube/eventjs.js
+  ----------------------------------------------------
+*/
+
+if (typeof(eventjs) === "undefined") var eventjs = {};
+if (typeof(eventjs.proxy) === "undefined") eventjs.proxy = {};
+
+eventjs.proxy = (function(root) { "use strict";
+
+/*
+  Create a new pointer gesture instance.
+*/
+
+root.pointerSetup = function(conf, self) {
+  /// Configure.
+  conf.target = conf.target || window;
+  conf.doc = conf.target.ownerDocument || conf.target; // Associated document.
+  conf.minFingers = conf.minFingers || conf.fingers || 1; // Minimum required fingers.
+  conf.maxFingers = conf.maxFingers || conf.fingers || Infinity; // Maximum allowed fingers.
+  conf.position = conf.position || "relative"; // Determines what coordinate system points are returned.
+  delete conf.fingers; //-
+  /// Convenience data.
+  self = self || {};
+  self.enabled = true;
+  self.gesture = conf.gesture;
+  self.target = conf.target;
+  self.env = conf.env;
+  ///
+  if (eventjs.modifyEventListener && conf.fromOverwrite) {
+    conf.oldListener = conf.listener;
+    conf.listener = eventjs.createPointerEvent;
+  }
+  /// Convenience commands.
+  var fingers = 0;
+  var type = self.gesture.indexOf("pointer") === 0 && eventjs.modifyEventListener ? "pointer" : "mouse";
+  if (conf.oldListener) self.oldListener = conf.oldListener;
+  ///
+  self.listener = conf.listener;
+  self.proxy = function(listener) {
+    self.defaultListener = conf.listener;
+    conf.listener = listener;
+    listener(conf.event, self);
+  };
+  self.add = function() {
+    if (self.enabled === true) return;
+    if (conf.onPointerDown) eventjs.add(conf.target, type + "down", conf.onPointerDown);
+    if (conf.onPointerMove) eventjs.add(conf.doc, type + "move", conf.onPointerMove);
+    if (conf.onPointerUp) eventjs.add(conf.doc, type + "up", conf.onPointerUp);
+    self.enabled = true;
+  };
+  self.remove = function() {
+    if (self.enabled === false) return;
+    if (conf.onPointerDown) eventjs.remove(conf.target, type + "down", conf.onPointerDown);
+    if (conf.onPointerMove) eventjs.remove(conf.doc, type + "move", conf.onPointerMove);
+    if (conf.onPointerUp) eventjs.remove(conf.doc, type + "up", conf.onPointerUp);
+    self.reset();
+    self.enabled = false;
+  };
+  self.pause = function(opt) {
+    if (conf.onPointerMove && (!opt || opt.move)) eventjs.remove(conf.doc, type + "move", conf.onPointerMove);
+    if (conf.onPointerUp && (!opt || opt.up)) eventjs.remove(conf.doc, type + "up", conf.onPointerUp);
+    fingers = conf.fingers;
+    conf.fingers = 0;
+  };
+  self.resume = function(opt) {
+    if (conf.onPointerMove && (!opt || opt.move)) eventjs.add(conf.doc, type + "move", conf.onPointerMove);
+    if (conf.onPointerUp && (!opt || opt.up)) eventjs.add(conf.doc, type + "up", conf.onPointerUp);
+    conf.fingers = fingers;
+  };
+  self.reset = function() {
+    conf.tracker = {};
+    conf.fingers = 0;
+  };
+  ///
+  return self;
+};
+
+/*
+  Begin proxied pointer command.
+*/
+
+var sp = eventjs.supports; // Default pointerType
+///
+eventjs.isMouse = !!sp.mouse;
+eventjs.isMSPointer = !!sp.touch;
+eventjs.isTouch = !!sp.msPointer;
+///
+root.pointerStart = function(event, self, conf) {
+  /// tracks multiple inputs
+  var type = (event.type || "mousedown").toUpperCase();
+  if (type.indexOf("MOUSE") === 0) {
+    eventjs.isMouse = true;
+    eventjs.isTouch = false;
+    eventjs.isMSPointer = false;
+  } else if (type.indexOf("TOUCH") === 0) {
+    eventjs.isMouse = false;
+    eventjs.isTouch = true;
+    eventjs.isMSPointer = false;
+  } else if (type.indexOf("MSPOINTER") === 0) {
+    eventjs.isMouse = false;
+    eventjs.isTouch = false;
+    eventjs.isMSPointer = true;
+  }
+  ///
+  var addTouchStart = function(touch, sid) {
+    var bbox = conf.bbox;
+    var pt = track[sid] = {};
+    ///
+    switch(conf.position) {
+      case "absolute": // Absolute from within window.
+        pt.offsetX = 0;
+        pt.offsetY = 0;
+        break;
+      case "differenceFromLast": // Since last coordinate recorded.
+        pt.offsetX = touch.pageX;
+        pt.offsetY = touch.pageY;
+        break;
+      case "difference": // Relative from origin.
+        pt.offsetX = touch.pageX;
+        pt.offsetY = touch.pageY;
+        break;
+      case "move": // Move target element.
+        pt.offsetX = touch.pageX - bbox.x1;
+        pt.offsetY = touch.pageY - bbox.y1;
+        break;
+      default: // Relative from within target.
+        pt.offsetX = bbox.x1 - bbox.scrollLeft;
+        pt.offsetY = bbox.y1 - bbox.scrollTop;
+        break;
+    }
+    ///
+    var x = touch.pageX - pt.offsetX;
+    var y = touch.pageY - pt.offsetY;
+    ///
+    pt.rotation = 0;
+    pt.scale = 1;
+    pt.startTime = pt.moveTime = (new Date()).getTime();
+    pt.move = { x: x, y: y };
+    pt.start = { x: x, y: y };
+    ///
+    conf.fingers ++;
+  };
+  ///
+  conf.event = event;
+  if (self.defaultListener) {
+    conf.listener = self.defaultListener;
+    delete self.defaultListener;
+  }
+  ///
+  var isTouchStart = !conf.fingers;
+  var track = conf.tracker;
+  var touches = event.changedTouches || root.getCoords(event);
+  var length = touches.length;
+  // Adding touch events to tracking.
+  for (var i = 0; i < length; i ++) {
+    var touch = touches[i];
+    var sid = touch.identifier || Infinity; // Touch ID.
+    // Track the current state of the touches.
+    if (conf.fingers) {
+      if (conf.fingers >= conf.maxFingers) {
+        var ids = [];
+        for (var sid in conf.tracker) ids.push(sid);
+        self.identifier = ids.join(",");
+        return isTouchStart;
+      }
+      var fingers = 0; // Finger ID.
+      for (var rid in track) {
+        // Replace removed finger.
+        if (track[rid].up) {
+          delete track[rid];
+          addTouchStart(touch, sid);
+          conf.cancel = true;
+          break;
+        }
+        fingers ++;
+      }
+      // Add additional finger.
+      if (track[sid]) continue;
+      addTouchStart(touch, sid);
+    } else { // Start tracking fingers.
+      track = conf.tracker = {};
+      self.bbox = conf.bbox = root.getBoundingBox(conf.target);
+      conf.fingers = 0;
+      conf.cancel = false;
+      addTouchStart(touch, sid);
+    }
+  }
+  ///
+  var ids = [];
+  for (var sid in conf.tracker) ids.push(sid);
+  self.identifier = ids.join(",");
+  ///
+  return isTouchStart;
+};
+
+/*
+  End proxied pointer command.
+*/
+
+root.pointerEnd = function(event, self, conf, onPointerUp) {
+  // Record changed touches have ended (iOS changedTouches is not reliable).
+  var touches = event.touches || [];
+  var length = touches.length;
+  var exists = {};
+  for (var i = 0; i < length; i ++) {
+    var touch = touches[i];
+    var sid = touch.identifier;
+    exists[sid || Infinity] = true;
+  }
+  for (var sid in conf.tracker) {
+    var track = conf.tracker[sid];
+    if (exists[sid] || track.up) continue;
+    if (onPointerUp) { // add changedTouches to mouse.
+      onPointerUp({
+        pageX: track.pageX,
+        pageY: track.pageY,
+        changedTouches: [{
+          pageX: track.pageX,
+          pageY: track.pageY,
+          identifier: sid === "Infinity" ? Infinity : sid
+        }]
+      }, "up");
+    }
+    track.up = true;
+    conf.fingers --;
+  }
+/*  // This should work but fails in Safari on iOS4 so not using it.
+  var touches = event.changedTouches || root.getCoords(event);
+  var length = touches.length;
+  // Record changed touches have ended (this should work).
+  for (var i = 0; i < length; i ++) {
+    var touch = touches[i];
+    var sid = touch.identifier || Infinity;
+    var track = conf.tracker[sid];
+    if (track && !track.up) {
+      if (onPointerUp) { // add changedTouches to mouse.
+        onPointerUp({
+          changedTouches: [{
+            pageX: track.pageX,
+            pageY: track.pageY,
+            identifier: sid === "Infinity" ? Infinity : sid
+          }]
+        }, "up");
+      }
+      track.up = true;
+      conf.fingers --;
+    }
+  } */
+  // Wait for all fingers to be released.
+  if (conf.fingers !== 0) return false;
+  // Record total number of fingers gesture used.
+  var ids = [];
+  conf.gestureFingers = 0;
+  for (var sid in conf.tracker) {
+    conf.gestureFingers ++;
+    ids.push(sid);
+  }
+  self.identifier = ids.join(",");
+  // Our pointer gesture has ended.
+  return true;
+};
+
+/*
+  Returns mouse coords in an array to match event.*Touches
+  ------------------------------------------------------------
+  var touch = event.changedTouches || root.getCoords(event);
+*/
+
+root.getCoords = function(event) {
+  if (typeof(event.pageX) !== "undefined") { // Desktop browsers.
+    root.getCoords = function(event) {
+      return Array({
+        type: "mouse",
+        x: event.pageX,
+        y: event.pageY,
+        pageX: event.pageX,
+        pageY: event.pageY,
+        identifier: event.pointerId || Infinity // pointerId is MS
+      });
+    };
+  } else { // Internet Explorer <= 8.0
+    root.getCoords = function(event) {
+      var doc = document.documentElement;
+      event = event || window.event;
+      return Array({
+        type: "mouse",
+        x: event.clientX + doc.scrollLeft,
+        y: event.clientY + doc.scrollTop,
+        pageX: event.clientX + doc.scrollLeft,
+        pageY: event.clientY + doc.scrollTop,
+        identifier: Infinity
+      });
+    };
+  }
+  return root.getCoords(event);
+};
+
+/*
+  Returns single coords in an object.
+  ------------------------------------------------------------
+  var mouse = root.getCoord(event);
+*/
+
+root.getCoord = function(event) {
+  if ("ontouchstart" in window) { // Mobile browsers.
+    var pX = 0;
+    var pY = 0;
+    root.getCoord = function(event) {
+      var touches = event.changedTouches;
+      if (touches && touches.length) { // ontouchstart + ontouchmove
+        return {
+          x: pX = touches[0].pageX,
+          y: pY = touches[0].pageY
+        };
+      } else { // ontouchend
+        return {
+          x: pX,
+          y: pY
+        };
+      }
+    };
+  } else if(typeof(event.pageX) !== "undefined" && typeof(event.pageY) !== "undefined") { // Desktop browsers.
+    root.getCoord = function(event) {
+      return {
+        x: event.pageX,
+        y: event.pageY
+      };
+    };
+  } else { // Internet Explorer <=8.0
+    root.getCoord = function(event) {
+      var doc = document.documentElement;
+      event = event || window.event;
+      return {
+        x: event.clientX + doc.scrollLeft,
+        y: event.clientY + doc.scrollTop
+      };
+    };
+  }
+  return root.getCoord(event);
+};
+
+/*
+  Get target scale and position in space.
+*/
+
+var getPropertyAsFloat = function(o, type) {
+  var n = parseFloat(o.getPropertyValue(type), 10);
+  return isFinite(n) ? n : 0;
+};
+
+root.getBoundingBox = function(o) {
+  if (o === window || o === document) o = document.body;
+  ///
+  var bbox = {};
+  var bcr = o.getBoundingClientRect();
+  bbox.width = bcr.width;
+  bbox.height = bcr.height;
+  bbox.x1 = bcr.left;
+  bbox.y1 = bcr.top;
+  bbox.scaleX = bcr.width / o.offsetWidth || 1;
+  bbox.scaleY = bcr.height / o.offsetHeight || 1;
+  bbox.scrollLeft = 0;
+  bbox.scrollTop = 0;
+  ///
+  var style = window.getComputedStyle(o);
+  var borderBox = style.getPropertyValue("box-sizing") === "border-box";
+  ///
+  if (borderBox === false) {
+    var left = getPropertyAsFloat(style, "border-left-width");
+    var right = getPropertyAsFloat(style, "border-right-width");
+    var bottom = getPropertyAsFloat(style, "border-bottom-width");
+    var top = getPropertyAsFloat(style, "border-top-width");
+    bbox.border = [ left, right, top, bottom ];
+    bbox.x1 += left;
+    bbox.y1 += top;
+    bbox.width -= right + left;
+    bbox.height -= bottom + top;
+  }
+
+/*  var left = getPropertyAsFloat(style, "padding-left");
+  var right = getPropertyAsFloat(style, "padding-right");
+  var bottom = getPropertyAsFloat(style, "padding-bottom");
+  var top = getPropertyAsFloat(style, "padding-top");
+  bbox.padding = [ left, right, top, bottom ];*/
+  ///
+  bbox.x2 = bbox.x1 + bbox.width;
+  bbox.y2 = bbox.y1 + bbox.height;
+
+  /// Get the scroll of container element.
+  var position = style.getPropertyValue("position");
+  var tmp = position === "fixed" ? o : o.parentNode;
+  while (tmp !== null) {
+    if (tmp === document.body) break;
+    if (tmp.scrollTop === undefined) break;
+    var style = window.getComputedStyle(tmp);
+    var position = style.getPropertyValue("position");
+    if (position === "absolute") {
+
+    } else if (position === "fixed") {
+//      bbox.scrollTop += document.body.scrollTop;
+//      bbox.scrollLeft += document.body.scrollLeft;
+      bbox.scrollTop -= tmp.parentNode.scrollTop;
+      bbox.scrollLeft -= tmp.parentNode.scrollLeft;
+      break;
+    } else {
+      bbox.scrollLeft += tmp.scrollLeft;
+      bbox.scrollTop += tmp.scrollTop;
+    }
+    ///
+    tmp = tmp.parentNode;
+  };
+  ///
+  bbox.scrollBodyLeft = (window.pageXOffset !== undefined) ? window.pageXOffset : (document.documentElement || document.body.parentNode || document.body).scrollLeft;
+  bbox.scrollBodyTop = (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
+  ///
+  bbox.scrollLeft -= bbox.scrollBodyLeft;
+  bbox.scrollTop -= bbox.scrollBodyTop;
+  ///
+  return bbox;
+};
+
+/*
+  Keep track of metaKey, the proper ctrlKey for users platform.
+  ----------------------------------------------------
+  http://www.quirksmode.org/js/keys.html
+  -----------------------------------
+  http://unixpapa.com/js/key.html
+*/
+
+(function() {
+  var agent = navigator.userAgent.toLowerCase();
+  var mac = agent.indexOf("macintosh") !== -1;
+  var metaKeys;
+  if (mac && agent.indexOf("khtml") !== -1) { // chrome, safari.
+    metaKeys = { 91: true, 93: true };
+  } else if (mac && agent.indexOf("firefox") !== -1) {  // mac firefox.
+    metaKeys = { 224: true };
+  } else { // windows, linux, or mac opera.
+    metaKeys = { 17: true };
+  }
+  (root.metaTrackerReset = function() {
+    eventjs.fnKey = root.fnKey = false;
+    eventjs.metaKey = root.metaKey = false;
+    eventjs.escKey = root.escKey = false;
+    eventjs.ctrlKey = root.ctrlKey = false;
+    eventjs.shiftKey = root.shiftKey = false;
+    eventjs.altKey = root.altKey = false;
+  })();
+  root.metaTracker = function(event) {
+    var isKeyDown = event.type === "keydown";
+    if (event.keyCode === 27) eventjs.escKey = root.escKey = isKeyDown;
+    if (metaKeys[event.keyCode]) eventjs.metaKey = root.metaKey = isKeyDown;
+    eventjs.ctrlKey = root.ctrlKey = event.ctrlKey;
+    eventjs.shiftKey = root.shiftKey = event.shiftKey;
+    eventjs.altKey = root.altKey = event.altKey;
+  };
+})();
+
+return root;
+
+})(eventjs.proxy);
+/*:
+  ----------------------------------------------------
+  "MutationObserver" event proxy.
+  ----------------------------------------------------
+  author: Selvakumar Arumugam - MIT LICENSE
+     src: http://stackoverflow.com/questions/10868104/can-you-have-a-javascript-hook-trigger-after-a-dom-elements-style-object-change
+  ----------------------------------------------------
+*/
+if (typeof(eventjs) === "undefined") var eventjs = {};
+
+eventjs.MutationObserver = (function() {
+  var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+  var DOMAttrModifiedSupported = !MutationObserver && (function() {
+    var p = document.createElement("p");
+    var flag = false;
+    var fn = function() { flag = true };
+    if (p.addEventListener) {
+      p.addEventListener("DOMAttrModified", fn, false);
+    } else if (p.attachEvent) {
+      p.attachEvent("onDOMAttrModified", fn);
+    } else {
+      return false;
+    }
+    ///
+    p.setAttribute("id", "target");
+    ///
+    return flag;
+  })();
+  ///
+  return function(container, callback) {
+    if (MutationObserver) {
+      var options = {
+        subtree: false,
+        attributes: true
+      };
+      var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(e) {
+          callback.call(e.target, e.attributeName);
+        });
+      });
+      observer.observe(container, options)
+    } else if (DOMAttrModifiedSupported) {
+      eventjs.add(container, "DOMAttrModified", function(e) {
+        callback.call(container, e.attrName);
+      });
+    } else if ("onpropertychange" in document.body) {
+      eventjs.add(container, "propertychange", function(e) {
+        callback.call(container, window.event.propertyName);
+      });
+    }
+  }
+})();
+/*:
+  "Click" event proxy.
+  ----------------------------------------------------
+  eventjs.add(window, "click", function(event, self) {});
+*/
+
+if (typeof(eventjs) === "undefined") var eventjs = {};
+if (typeof(eventjs.proxy) === "undefined") eventjs.proxy = {};
+
+eventjs.proxy = (function(root) { "use strict";
+
+root.click = function(conf) {
+  conf.gesture = conf.gesture || "click";
+  conf.maxFingers = conf.maxFingers || conf.fingers || 1;
+  /// Tracking the events.
+  conf.onPointerDown = function (event) {
+    if (root.pointerStart(event, self, conf)) {
+      eventjs.add(conf.target, "mouseup", conf.onPointerUp);
+    }
+  };
+  conf.onPointerUp = function(event) {
+    if (root.pointerEnd(event, self, conf)) {
+      eventjs.remove(conf.target, "mouseup", conf.onPointerUp);
+      var pointers = event.changedTouches || root.getCoords(event);
+      var pointer = pointers[0];
+      var bbox = conf.bbox;
+      var newbbox = root.getBoundingBox(conf.target);
+      var y = pointer.pageY - newbbox.scrollBodyTop;
+      var x = pointer.pageX - newbbox.scrollBodyLeft;
+      ////
+      if (x > bbox.x1 && y > bbox.y1 &&
+        x < bbox.x2 && y < bbox.y2 &&
+        bbox.scrollTop === newbbox.scrollTop) { // has not been scrolled
+        ///
+        for (var key in conf.tracker) break; //- should be modularized? in dblclick too
+        var point = conf.tracker[key];
+        self.x = point.start.x;
+        self.y = point.start.y;
+        ///
+        conf.listener(event, self);
+      }
+    }
+  };
+  // Generate maintenance commands, and other configurations.
+  var self = root.pointerSetup(conf);
+  self.state = "click";
+  // Attach events.
+  eventjs.add(conf.target, "mousedown", conf.onPointerDown);
+  // Return this object.
+  return self;
+};
+
+eventjs.Gesture = eventjs.Gesture || {};
+eventjs.Gesture._gestureHandlers = eventjs.Gesture._gestureHandlers || {};
+eventjs.Gesture._gestureHandlers.click = root.click;
+
+return root;
+
+})(eventjs.proxy);
+/*:
+  "Double-Click" aka "Double-Tap" event proxy.
+  ----------------------------------------------------
+  eventjs.add(window, "dblclick", function(event, self) {});
+  ----------------------------------------------------
+  Touch an target twice for <= 700ms, with less than 25 pixel drift.
+*/
+
+if (typeof(eventjs) === "undefined") var eventjs = {};
+if (typeof(eventjs.proxy) === "undefined") eventjs.proxy = {};
+
+eventjs.proxy = (function(root) { "use strict";
+
+root.dbltap =
+root.dblclick = function(conf) {
+  conf.gesture = conf.gesture || "dbltap";
+  conf.maxFingers = conf.maxFingers || conf.fingers || 1;
+  // Setting up local variables.
+  var delay = 700; // in milliseconds
+  var time0, time1, timeout;
+  var pointer0, pointer1;
+  // Tracking the events.
+  conf.onPointerDown = function (event) {
+    var pointers = event.changedTouches || root.getCoords(event);
+    if (time0 && !time1) { // Click #2
+      pointer1 = pointers[0];
+      time1 = (new Date()).getTime() - time0;
+    } else { // Click #1
+      pointer0 = pointers[0];
+      time0 = (new Date()).getTime();
+      time1 = 0;
+      clearTimeout(timeout);
+      timeout = setTimeout(function() {
+        time0 = 0;
+      }, delay);
+    }
+    if (root.pointerStart(event, self, conf)) {
+      eventjs.add(conf.target, "mousemove", conf.onPointerMove).listener(event);
+      eventjs.add(conf.target, "mouseup", conf.onPointerUp);
+    }
+  };
+  conf.onPointerMove = function (event) {
+    if (time0 && !time1) {
+      var pointers = event.changedTouches || root.getCoords(event);
+      pointer1 = pointers[0];
+    }
+    var bbox = conf.bbox;
+    var ax = (pointer1.pageX - bbox.x1);
+    var ay = (pointer1.pageY - bbox.y1);
+    if (!(ax > 0 && ax < bbox.width && // Within target coordinates..
+        ay > 0 && ay < bbox.height &&
+        Math.abs(pointer1.pageX - pointer0.pageX) <= 25 && // Within drift deviance.
+        Math.abs(pointer1.pageY - pointer0.pageY) <= 25)) {
+      // Cancel out this listener.
+      eventjs.remove(conf.target, "mousemove", conf.onPointerMove);
+      clearTimeout(timeout);
+      time0 = time1 = 0;
+    }
+  };
+  conf.onPointerUp = function(event) {
+    if (root.pointerEnd(event, self, conf)) {
+      eventjs.remove(conf.target, "mousemove", conf.onPointerMove);
+      eventjs.remove(conf.target, "mouseup", conf.onPointerUp);
+    }
+    if (time0 && time1) {
+      if (time1 <= delay) { // && !(event.cancelBubble && ++event.cancelBubbleCount > 1)) {
+        self.state = conf.gesture;
+        for (var key in conf.tracker) break;
+        var point = conf.tracker[key];
+        self.x = point.start.x;
+        self.y = point.start.y;
+        conf.listener(event, self);
+      }
+      clearTimeout(timeout);
+      time0 = time1 = 0;
+    }
+  };
+  // Generate maintenance commands, and other configurations.
+  var self = root.pointerSetup(conf);
+  self.state = "dblclick";
+  // Attach events.
+  eventjs.add(conf.target, "mousedown", conf.onPointerDown);
+  // Return this object.
+  return self;
+};
+
+eventjs.Gesture = eventjs.Gesture || {};
+eventjs.Gesture._gestureHandlers = eventjs.Gesture._gestureHandlers || {};
+eventjs.Gesture._gestureHandlers.dbltap = root.dbltap;
+eventjs.Gesture._gestureHandlers.dblclick = root.dblclick;
+
+return root;
+
+})(eventjs.proxy);
+/*:
+  "Drag" event proxy (1+ fingers).
+  ----------------------------------------------------
+  CONFIGURE: maxFingers, position.
+  ----------------------------------------------------
+  eventjs.add(window, "drag", function(event, self) {
+    console.log(self.gesture, self.state, self.start, self.x, self.y, self.bbox);
+  });
+*/
+
+if (typeof(eventjs) === "undefined") var eventjs = {};
+if (typeof(eventjs.proxy) === "undefined") eventjs.proxy = {};
+
+eventjs.proxy = (function(root) { "use strict";
+
+root.dragElement = function(that, event) {
+  root.drag({
+    event: event,
+    target: that,
+    position: "move",
+    listener: function(event, self) {
+      that.style.left = self.x + "px";
+      that.style.top = self.y + "px";
+      eventjs.prevent(event);
+    }
+  });
+};
+
+root.drag = function(conf) {
+  conf.gesture = "drag";
+  conf.onPointerDown = function (event) {
+    if (root.pointerStart(event, self, conf)) {
+      if (!conf.monitor) {
+        eventjs.add(conf.doc, "mousemove", conf.onPointerMove);
+        eventjs.add(conf.doc, "mouseup", conf.onPointerUp);
+      }
+    }
+    // Process event listener.
+    conf.onPointerMove(event, "down");
+  };
+  conf.onPointerMove = function (event, state) {
+    if (!conf.tracker) return conf.onPointerDown(event);
+    var bbox = conf.bbox;
+    var touches = event.changedTouches || root.getCoords(event);
+    var length = touches.length;
+    for (var i = 0; i < length; i ++) {
+      var touch = touches[i];
+      var identifier = touch.identifier || Infinity;
+      var pt = conf.tracker[identifier];
+      // Identifier defined outside of listener.
+      if (!pt) continue;
+      pt.pageX = touch.pageX;
+      pt.pageY = touch.pageY;
+      // Record data.
+      self.state = state || "move";
+      self.identifier = identifier;
+      self.start = pt.start;
+      self.fingers = conf.fingers;
+      if (conf.position === "differenceFromLast") {
+        self.x = (pt.pageX - pt.offsetX);
+        self.y = (pt.pageY - pt.offsetY);
+        pt.offsetX = pt.pageX;
+        pt.offsetY = pt.pageY;
+      } else {
+        self.x = (pt.pageX - pt.offsetX);
+        self.y = (pt.pageY - pt.offsetY);
+      }
+      ///
+      conf.listener(event, self);
+    }
+  };
+  conf.onPointerUp = function(event) {
+    // Remove tracking for touch.
+    if (root.pointerEnd(event, self, conf, conf.onPointerMove)) {
+      if (!conf.monitor) {
+        eventjs.remove(conf.doc, "mousemove", conf.onPointerMove);
+        eventjs.remove(conf.doc, "mouseup", conf.onPointerUp);
+      }
+    }
+  };
+  // Generate maintenance commands, and other configurations.
+  var self = root.pointerSetup(conf);
+  // Attach events.
+  if (conf.event) {
+    conf.onPointerDown(conf.event);
+  } else { //
+    eventjs.add(conf.target, "mousedown", conf.onPointerDown);
+    if (conf.monitor) {
+      eventjs.add(conf.doc, "mousemove", conf.onPointerMove);
+      eventjs.add(conf.doc, "mouseup", conf.onPointerUp);
+    }
+  }
+  // Return this object.
+  return self;
+};
+
+eventjs.Gesture = eventjs.Gesture || {};
+eventjs.Gesture._gestureHandlers = eventjs.Gesture._gestureHandlers || {};
+eventjs.Gesture._gestureHandlers.drag = root.drag;
+
+return root;
+
+})(eventjs.proxy);
+/*:
+  "Gesture" event proxy (2+ fingers).
+  ----------------------------------------------------
+  CONFIGURE: minFingers, maxFingers.
+  ----------------------------------------------------
+  eventjs.add(window, "gesture", function(event, self) {
+    console.log(
+      self.x, // centroid
+      self.y,
+      self.rotation,
+      self.scale,
+      self.fingers,
+      self.state
+    );
+  });
+*/
+
+if (typeof(eventjs) === "undefined") var eventjs = {};
+if (typeof(eventjs.proxy) === "undefined") eventjs.proxy = {};
+
+eventjs.proxy = (function(root) { "use strict";
+
+var RAD_DEG = Math.PI / 180;
+var getCentroid = function(self, points) {
+  var centroidx = 0;
+  var centroidy = 0;
+  var length = 0;
+  for (var sid in points) {
+    var touch = points[sid];
+    if (touch.up) continue;
+    centroidx += touch.move.x;
+    centroidy += touch.move.y;
+    length ++;
+  }
+  self.x = centroidx /= length;
+  self.y = centroidy /= length;
+  return self;
+};
+
+root.gesture = function(conf) {
+  conf.gesture = conf.gesture || "gesture";
+  conf.minFingers = conf.minFingers || conf.fingers || 2;
+  // Tracking the events.
+  conf.onPointerDown = function (event) {
+    var fingers = conf.fingers;
+    if (root.pointerStart(event, self, conf)) {
+      eventjs.add(conf.doc, "mousemove", conf.onPointerMove);
+      eventjs.add(conf.doc, "mouseup", conf.onPointerUp);
+    }
+    // Record gesture start.
+    if (conf.fingers === conf.minFingers && fingers !== conf.fingers) {
+      self.fingers = conf.minFingers;
+      self.scale = 1;
+      self.rotation = 0;
+      self.state = "start";
+      var sids = ""; //- FIXME(mud): can generate duplicate IDs.
+      for (var key in conf.tracker) sids += key;
+      self.identifier = parseInt(sids);
+      getCentroid(self, conf.tracker);
+      conf.listener(event, self);
+    }
+  };
+  ///
+  conf.onPointerMove = function (event, state) {
+    var bbox = conf.bbox;
+    var points = conf.tracker;
+    var touches = event.changedTouches || root.getCoords(event);
+    var length = touches.length;
+    // Update tracker coordinates.
+    for (var i = 0; i < length; i ++) {
+      var touch = touches[i];
+      var sid = touch.identifier || Infinity;
+      var pt = points[sid];
+      // Check whether "pt" is used by another gesture.
+      if (!pt) continue;
+      // Find the actual coordinates.
+      pt.move.x = (touch.pageX - bbox.x1);
+      pt.move.y = (touch.pageY - bbox.y1);
+    }
+    ///
+    if (conf.fingers < conf.minFingers) return;
+    ///
+    var touches = [];
+    var scale = 0;
+    var rotation = 0;
+
+    /// Calculate centroid of gesture.
+    getCentroid(self, points);
+    ///
+    for (var sid in points) {
+      var touch = points[sid];
+      if (touch.up) continue;
+      var start = touch.start;
+      if (!start.distance) {
+        var dx = start.x - self.x;
+        var dy = start.y - self.y;
+        start.distance = Math.sqrt(dx * dx + dy * dy);
+        start.angle = Math.atan2(dx, dy) / RAD_DEG;
+      }
+      // Calculate scale.
+      var dx = touch.move.x - self.x;
+      var dy = touch.move.y - self.y;
+      var distance = Math.sqrt(dx * dx + dy * dy);
+      scale += distance / start.distance;
+      // Calculate rotation.
+      var angle = Math.atan2(dx, dy) / RAD_DEG;
+      var rotate = (start.angle - angle + 360) % 360 - 180;
+      touch.DEG2 = touch.DEG1; // Previous degree.
+      touch.DEG1 = rotate > 0 ? rotate : -rotate; // Current degree.
+      if (typeof(touch.DEG2) !== "undefined") {
+        if (rotate > 0) {
+          touch.rotation += touch.DEG1 - touch.DEG2;
+        } else {
+          touch.rotation -= touch.DEG1 - touch.DEG2;
+        }
+        rotation += touch.rotation;
+      }
+      // Attach current points to self.
+      touches.push(touch.move);
+    }
+    ///
+    self.touches = touches;
+    self.fingers = conf.fingers;
+    self.scale = scale / conf.fingers;
+    self.rotation = rotation / conf.fingers;
+    self.state = "change";
+    conf.listener(event, self);
+  };
+  conf.onPointerUp = function(event) {
+    // Remove tracking for touch.
+    var fingers = conf.fingers;
+    if (root.pointerEnd(event, self, conf)) {
+      eventjs.remove(conf.doc, "mousemove", conf.onPointerMove);
+      eventjs.remove(conf.doc, "mouseup", conf.onPointerUp);
+    }
+    // Check whether fingers has dropped below minFingers.
+    if (fingers === conf.minFingers && conf.fingers < conf.minFingers) {
+      self.fingers = conf.fingers;
+      self.state = "end";
+      conf.listener(event, self);
+    }
+  };
+  // Generate maintenance commands, and other configurations.
+  var self = root.pointerSetup(conf);
+  // Attach events.
+  eventjs.add(conf.target, "mousedown", conf.onPointerDown);
+  // Return this object.
+  return self;
+};
+
+eventjs.Gesture = eventjs.Gesture || {};
+eventjs.Gesture._gestureHandlers = eventjs.Gesture._gestureHandlers || {};
+eventjs.Gesture._gestureHandlers.gesture = root.gesture;
+
+return root;
+
+})(eventjs.proxy);
+/*:
+  "Pointer" event proxy (1+ fingers).
+  ----------------------------------------------------
+  CONFIGURE: minFingers, maxFingers.
+  ----------------------------------------------------
+  eventjs.add(window, "gesture", function(event, self) {
+    console.log(self.rotation, self.scale, self.fingers, self.state);
+  });
+*/
+
+if (typeof(eventjs) === "undefined") var eventjs = {};
+if (typeof(eventjs.proxy) === "undefined") eventjs.proxy = {};
+
+eventjs.proxy = (function(root) { "use strict";
+
+root.pointerdown =
+root.pointermove =
+root.pointerup = function(conf) {
+  conf.gesture = conf.gesture || "pointer";
+  if (conf.target.isPointerEmitter) return;
+  // Tracking the events.
+  var isDown = true;
+  conf.onPointerDown = function (event) {
+    isDown = false;
+    self.gesture = "pointerdown";
+    conf.listener(event, self);
+  };
+  conf.onPointerMove = function (event) {
+    self.gesture = "pointermove";
+    conf.listener(event, self, isDown);
+  };
+  conf.onPointerUp = function (event) {
+    isDown = true;
+    self.gesture = "pointerup";
+    conf.listener(event, self, true);
+  };
+  // Generate maintenance commands, and other configurations.
+  var self = root.pointerSetup(conf);
+  // Attach events.
+  eventjs.add(conf.target, "mousedown", conf.onPointerDown);
+  eventjs.add(conf.target, "mousemove", conf.onPointerMove);
+  eventjs.add(conf.doc, "mouseup", conf.onPointerUp);
+  // Return this object.
+  conf.target.isPointerEmitter = true;
+  return self;
+};
+
+eventjs.Gesture = eventjs.Gesture || {};
+eventjs.Gesture._gestureHandlers = eventjs.Gesture._gestureHandlers || {};
+eventjs.Gesture._gestureHandlers.pointerdown = root.pointerdown;
+eventjs.Gesture._gestureHandlers.pointermove = root.pointermove;
+eventjs.Gesture._gestureHandlers.pointerup = root.pointerup;
+
+return root;
+
+})(eventjs.proxy);
+/*:
+  "Device Motion" and "Shake" event proxy.
+  ----------------------------------------------------
+  http://developer.android.com/reference/android/hardware/Sensoreventjs.html#values
+  ----------------------------------------------------
+  eventjs.add(window, "shake", function(event, self) {});
+  eventjs.add(window, "devicemotion", function(event, self) {
+    console.log(self.acceleration, self.accelerationIncludingGravity);
+  });
+*/
+
+if (typeof(eventjs) === "undefined") var eventjs = {};
+if (typeof(eventjs.proxy) === "undefined") eventjs.proxy = {};
+
+eventjs.proxy = (function(root) { "use strict";
+
+root.shake = function(conf) {
+  // Externally accessible data.
+  var self = {
+    gesture: "devicemotion",
+    acceleration: {},
+    accelerationIncludingGravity: {},
+    target: conf.target,
+    listener: conf.listener,
+    remove: function() {
+      window.removeEventListener('devicemotion', onDeviceMotion, false);
+    }
+  };
+  // Setting up local variables.
+  var threshold = 4; // Gravitational threshold.
+  var timeout = 1000; // Timeout between shake events.
+  var timeframe = 200; // Time between shakes.
+  var shakes = 3; // Minimum shakes to trigger event.
+  var lastShake = (new Date()).getTime();
+  var gravity = { x: 0, y: 0, z: 0 };
+  var delta = {
+    x: { count: 0, value: 0 },
+    y: { count: 0, value: 0 },
+    z: { count: 0, value: 0 }
+  };
+  // Tracking the events.
+  var onDeviceMotion = function(e) {
+    var alpha = 0.8; // Low pass filter.
+    var o = e.accelerationIncludingGravity;
+    gravity.x = alpha * gravity.x + (1 - alpha) * o.x;
+    gravity.y = alpha * gravity.y + (1 - alpha) * o.y;
+    gravity.z = alpha * gravity.z + (1 - alpha) * o.z;
+    self.accelerationIncludingGravity = gravity;
+    self.acceleration.x = o.x - gravity.x;
+    self.acceleration.y = o.y - gravity.y;
+    self.acceleration.z = o.z - gravity.z;
+    ///
+    if (conf.gesture === "devicemotion") {
+      conf.listener(e, self);
+      return;
+    }
+    var data = "xyz";
+    var now = (new Date()).getTime();
+    for (var n = 0, length = data.length; n < length; n ++) {
+      var letter = data[n];
+      var ACCELERATION = self.acceleration[letter];
+      var DELTA = delta[letter];
+      var abs = Math.abs(ACCELERATION);
+      /// Check whether another shake event was recently registered.
+      if (now - lastShake < timeout) continue;
+      /// Check whether delta surpasses threshold.
+      if (abs > threshold) {
+        var idx = now * ACCELERATION / abs;
+        var span = Math.abs(idx + DELTA.value);
+        // Check whether last delta was registered within timeframe.
+        if (DELTA.value && span < timeframe) {
+          DELTA.value = idx;
+          DELTA.count ++;
+          // Check whether delta count has enough shakes.
+          if (DELTA.count === shakes) {
+            conf.listener(e, self);
+            // Reset tracking.
+            lastShake = now;
+            DELTA.value = 0;
+            DELTA.count = 0;
+          }
+        } else {
+          // Track first shake.
+          DELTA.value = idx;
+          DELTA.count = 1;
+        }
+      }
+    }
+  };
+  // Attach events.
+  if (!window.addEventListener) return;
+  window.addEventListener('devicemotion', onDeviceMotion, false);
+  // Return this object.
+  return self;
+};
+
+eventjs.Gesture = eventjs.Gesture || {};
+eventjs.Gesture._gestureHandlers = eventjs.Gesture._gestureHandlers || {};
+eventjs.Gesture._gestureHandlers.shake = root.shake;
+
+return root;
+
+})(eventjs.proxy);
+/*:
+  "Swipe" event proxy (1+ fingers).
+  ----------------------------------------------------
+  CONFIGURE: snap, threshold, maxFingers.
+  ----------------------------------------------------
+  eventjs.add(window, "swipe", function(event, self) {
+    console.log(self.velocity, self.angle);
+  });
+*/
+
+if (typeof(eventjs) === "undefined") var eventjs = {};
+if (typeof(eventjs.proxy) === "undefined") eventjs.proxy = {};
+
+eventjs.proxy = (function(root) { "use strict";
+
+var RAD_DEG = Math.PI / 180;
+
+root.swipe = function(conf) {
+  conf.snap = conf.snap || 90; // angle snap.
+  conf.threshold = conf.threshold || 1; // velocity threshold.
+  conf.gesture = conf.gesture || "swipe";
+  // Tracking the events.
+  conf.onPointerDown = function (event) {
+    if (root.pointerStart(event, self, conf)) {
+      eventjs.add(conf.doc, "mousemove", conf.onPointerMove).listener(event);
+      eventjs.add(conf.doc, "mouseup", conf.onPointerUp);
+    }
+  };
+  conf.onPointerMove = function (event) {
+    var touches = event.changedTouches || root.getCoords(event);
+    var length = touches.length;
+    for (var i = 0; i < length; i ++) {
+      var touch = touches[i];
+      var sid = touch.identifier || Infinity;
+      var o = conf.tracker[sid];
+      // Identifier defined outside of listener.
+      if (!o) continue;
+      o.move.x = touch.pageX;
+      o.move.y = touch.pageY;
+      o.moveTime = (new Date()).getTime();
+    }
+  };
+  conf.onPointerUp = function(event) {
+    if (root.pointerEnd(event, self, conf)) {
+      eventjs.remove(conf.doc, "mousemove", conf.onPointerMove);
+      eventjs.remove(conf.doc, "mouseup", conf.onPointerUp);
+      ///
+      var velocity1;
+      var velocity2
+      var degree1;
+      var degree2;
+      /// Calculate centroid of gesture.
+      var start = { x: 0, y: 0 };
+      var endx = 0;
+      var endy = 0;
+      var length = 0;
+      ///
+      for (var sid in conf.tracker) {
+        var touch = conf.tracker[sid];
+        var xdist = touch.move.x - touch.start.x;
+        var ydist = touch.move.y - touch.start.y;
+        ///
+        endx += touch.move.x;
+        endy += touch.move.y;
+        start.x += touch.start.x;
+        start.y += touch.start.y;
+        length ++;
+        ///
+        var distance = Math.sqrt(xdist * xdist + ydist * ydist);
+        var ms = touch.moveTime - touch.startTime;
+        var degree2 = Math.atan2(xdist, ydist) / RAD_DEG + 180;
+        var velocity2 = ms ? distance / ms : 0;
+        if (typeof(degree1) === "undefined") {
+          degree1 = degree2;
+          velocity1 = velocity2;
+        } else if (Math.abs(degree2 - degree1) <= 20) {
+          degree1 = (degree1 + degree2) / 2;
+          velocity1 = (velocity1 + velocity2) / 2;
+        } else {
+          return;
+        }
+      }
+      ///
+      var fingers = conf.gestureFingers;
+      if (conf.minFingers <= fingers && conf.maxFingers >= fingers) {
+        if (velocity1 > conf.threshold) {
+          start.x /= length;
+          start.y /= length;
+          self.start = start;
+          self.x = endx / length;
+          self.y = endy / length;
+          self.angle = -((((degree1 / conf.snap + 0.5) >> 0) * conf.snap || 360) - 360);
+          self.velocity = velocity1;
+          self.fingers = fingers;
+          self.state = "swipe";
+          conf.listener(event, self);
+        }
+      }
+    }
+  };
+  // Generate maintenance commands, and other configurations.
+  var self = root.pointerSetup(conf);
+  // Attach events.
+  eventjs.add(conf.target, "mousedown", conf.onPointerDown);
+  // Return this object.
+  return self;
+};
+
+eventjs.Gesture = eventjs.Gesture || {};
+eventjs.Gesture._gestureHandlers = eventjs.Gesture._gestureHandlers || {};
+eventjs.Gesture._gestureHandlers.swipe = root.swipe;
+
+return root;
+
+})(eventjs.proxy);
+/*:
+  "Tap" and "Longpress" event proxy.
+  ----------------------------------------------------
+  CONFIGURE: delay (longpress), timeout (tap).
+  ----------------------------------------------------
+  eventjs.add(window, "tap", function(event, self) {
+    console.log(self.fingers);
+  });
+  ----------------------------------------------------
+  multi-finger tap // touch an target for <= 250ms.
+  multi-finger longpress // touch an target for >= 500ms
+*/
+
+if (typeof(eventjs) === "undefined") var eventjs = {};
+if (typeof(eventjs.proxy) === "undefined") eventjs.proxy = {};
+
+eventjs.proxy = (function(root) { "use strict";
+
+root.longpress = function(conf) {
+  conf.gesture = "longpress";
+  return root.tap(conf);
+};
+
+root.tap = function(conf) {
+  conf.delay = conf.delay || 500;
+  conf.timeout = conf.timeout || 250;
+  conf.driftDeviance = conf.driftDeviance || 10;
+  conf.gesture = conf.gesture || "tap";
+  // Setting up local variables.
+  var timestamp, timeout;
+  // Tracking the events.
+  conf.onPointerDown = function (event) {
+    if (root.pointerStart(event, self, conf)) {
+      timestamp = (new Date()).getTime();
+      // Initialize event listeners.
+      eventjs.add(conf.doc, "mousemove", conf.onPointerMove).listener(event);
+      eventjs.add(conf.doc, "mouseup", conf.onPointerUp);
+      // Make sure this is a "longpress" event.
+      if (conf.gesture !== "longpress") return;
+      timeout = setTimeout(function() {
+        if (event.cancelBubble && ++event.cancelBubbleCount > 1) return;
+        // Make sure no fingers have been changed.
+        var fingers = 0;
+        for (var key in conf.tracker) {
+          var point = conf.tracker[key];
+          if (point.end === true) return;
+          if (conf.cancel) return;
+          fingers ++;
+        }
+        // Send callback.
+        if (conf.minFingers <= fingers && conf.maxFingers >= fingers) {
+          self.state = "start";
+          self.fingers = fingers;
+          self.x = point.start.x;
+          self.y = point.start.y;
+          conf.listener(event, self);
+        }
+      }, conf.delay);
+    }
+  };
+  conf.onPointerMove = function (event) {
+    var bbox = conf.bbox;
+    var touches = event.changedTouches || root.getCoords(event);
+    var length = touches.length;
+    for (var i = 0; i < length; i ++) {
+      var touch = touches[i];
+      var identifier = touch.identifier || Infinity;
+      var pt = conf.tracker[identifier];
+      if (!pt) continue;
+      var x = (touch.pageX - bbox.x1);
+      var y = (touch.pageY - bbox.y1);
+      ///
+      var dx = x - pt.start.x;
+      var dy = y - pt.start.y;
+      var distance = Math.sqrt(dx * dx + dy * dy);
+      if (!(x > 0 && x < bbox.width && // Within target coordinates..
+          y > 0 && y < bbox.height &&
+          distance <= conf.driftDeviance)) { // Within drift deviance.
+        // Cancel out this listener.
+        eventjs.remove(conf.doc, "mousemove", conf.onPointerMove);
+        conf.cancel = true;
+        return;
+      }
+    }
+  };
+  conf.onPointerUp = function(event) {
+    if (root.pointerEnd(event, self, conf)) {
+      clearTimeout(timeout);
+      eventjs.remove(conf.doc, "mousemove", conf.onPointerMove);
+      eventjs.remove(conf.doc, "mouseup", conf.onPointerUp);
+      if (event.cancelBubble && ++event.cancelBubbleCount > 1) return;
+      // Callback release on longpress.
+      if (conf.gesture === "longpress") {
+        if (self.state === "start") {
+          self.state = "end";
+          conf.listener(event, self);
+        }
+        return;
+      }
+      // Cancel event due to movement.
+      if (conf.cancel) return;
+      // Ensure delay is within margins.
+      if ((new Date()).getTime() - timestamp > conf.timeout) return;
+      // Send callback.
+      var fingers = conf.gestureFingers;
+      if (conf.minFingers <= fingers && conf.maxFingers >= fingers) {
+        self.state = "tap";
+        self.fingers = conf.gestureFingers;
+        conf.listener(event, self);
+      }
+    }
+  };
+  // Generate maintenance commands, and other configurations.
+  var self = root.pointerSetup(conf);
+  // Attach events.
+  eventjs.add(conf.target, "mousedown", conf.onPointerDown);
+  // Return this object.
+  return self;
+};
+
+eventjs.Gesture = eventjs.Gesture || {};
+eventjs.Gesture._gestureHandlers = eventjs.Gesture._gestureHandlers || {};
+eventjs.Gesture._gestureHandlers.tap = root.tap;
+eventjs.Gesture._gestureHandlers.longpress = root.longpress;
+
+return root;
+
+})(eventjs.proxy);
+/*:
+  "Mouse Wheel" event proxy.
+  ----------------------------------------------------
+  eventjs.add(window, "wheel", function(event, self) {
+    console.log(self.state, self.wheelDelta);
+  });
+*/
+
+if (typeof(eventjs) === "undefined") var eventjs = {};
+if (typeof(eventjs.proxy) === "undefined") eventjs.proxy = {};
+
+eventjs.proxy = (function(root) { "use strict";
+
+root.wheelPreventElasticBounce = function(el) {
+  if (!el) return;
+  if (typeof(el) === "string") el = document.querySelector(el);
+  eventjs.add(el, "wheel", function(event, self) {
+    self.preventElasticBounce();
+    eventjs.stop(event);
+  });
+};
+
+root.wheel = function(conf) {
+  // Configure event listener.
+  var interval;
+  var timeout = conf.timeout || 150;
+  var count = 0;
+  // Externally accessible data.
+  var self = {
+    gesture: "wheel",
+    state: "start",
+    wheelDelta: 0,
+    target: conf.target,
+    listener: conf.listener,
+    preventElasticBounce: function(event) {
+      var target = this.target;
+      var scrollTop = target.scrollTop;
+      var top = scrollTop + target.offsetHeight;
+      var height = target.scrollHeight;
+      if (top === height && this.wheelDelta <= 0) eventjs.cancel(event);
+      else if (scrollTop === 0 && this.wheelDelta >= 0) eventjs.cancel(event);
+      eventjs.stop(event);
+    },
+    add: function() {
+      conf.target[add](type, onMouseWheel, false);
+    },
+    remove: function() {
+      conf.target[remove](type, onMouseWheel, false);
+    }
+  };
+  // Tracking the events.
+  var onMouseWheel = function(event) {
+    event = event || window.event;
+    self.state = count++ ? "change" : "start";
+    self.wheelDelta = event.detail ? event.detail * -20 : event.wheelDelta;
+    conf.listener(event, self);
+    clearTimeout(interval);
+    interval = setTimeout(function() {
+      count = 0;
+      self.state = "end";
+      self.wheelDelta = 0;
+      conf.listener(event, self);
+    }, timeout);
+  };
+  // Attach events.
+  var add = document.addEventListener ? "addEventListener" : "attachEvent";
+  var remove = document.removeEventListener ? "removeEventListener" : "detachEvent";
+  var type = eventjs.getEventSupport("mousewheel") ? "mousewheel" : "DOMMouseScroll";
+  conf.target[add](type, onMouseWheel, false);
+  // Return this object.
+  return self;
+};
+
+eventjs.Gesture = eventjs.Gesture || {};
+eventjs.Gesture._gestureHandlers = eventjs.Gesture._gestureHandlers || {};
+eventjs.Gesture._gestureHandlers.wheel = root.wheel;
+
+return root;
+
+})(eventjs.proxy);
+/*
+  "Orientation Change"
+  ----------------------------------------------------
+  https://developer.apple.com/library/safari/documentation/SafariDOMAdditions/Reference/DeviceOrientationEventClassRef/DeviceOrientationEvent/DeviceOrientationEvent.html#//apple_ref/doc/uid/TP40010526
+  ----------------------------------------------------
+  Event.add(window, "deviceorientation", function(event, self) {});
+*/
+
+if (typeof(Event) === "undefined") var Event = {};
+if (typeof(Event.proxy) === "undefined") Event.proxy = {};
+
+Event.proxy = (function(root) { "use strict";
+
+root.orientation = function(conf) {
+  // Externally accessible data.
+  var self = {
+    gesture: "orientationchange",
+    previous: null, /* Report the previous orientation */
+    current: window.orientation,
+    target: conf.target,
+    listener: conf.listener,
+    remove: function() {
+      window.removeEventListener('orientationchange', onOrientationChange, false);
+    }
+  };
+
+  // Tracking the events.
+  var onOrientationChange = function(e) {
+
+    self.previous = self.current;
+    self.current = window.orientation;
+      if(self.previous !== null && self.previous != self.current) {
+      conf.listener(e, self);
+      return;
+      }
+
+
+  };
+  // Attach events.
+  if (window.DeviceOrientationEvent) {
+      window.addEventListener("orientationchange", onOrientationChange, false);
+    }
+  // Return this object.
+  return self;
+};
+
+Event.Gesture = Event.Gesture || {};
+Event.Gesture._gestureHandlers = Event.Gesture._gestureHandlers || {};
+Event.Gesture._gestureHandlers.orientation = root.orientation;
+
+return root;
+
+})(Event.proxy);
 (function() {
 
   /**
@@ -183,8 +2629,6 @@ fabric.reNum = '(?:[-+]?(?:\\d+|\\d*\\.\\d+)(?:e[-+]?\\d+)?)';
     trigger: fire
   };
 })();
-
-
 /**
  * @namespace fabric.Collection
  */
@@ -332,8 +2776,6 @@ fabric.Collection = {
     }, 0);
   }
 };
-
-
 (function(global) {
 
   var sqrt = Math.sqrt,
@@ -866,8 +3308,6 @@ fabric.Collection = {
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function() {
 
   var arcToSegmentsCache = { },
@@ -1132,8 +3572,6 @@ fabric.Collection = {
   fabric.util.getBoundsOfCurve = getBoundsOfCurve;
 
 })();
-
-
 (function() {
 
   var slice = Array.prototype.slice;
@@ -1384,8 +3822,6 @@ fabric.Collection = {
   };
 
 })();
-
-
 (function() {
 
   /**
@@ -1420,8 +3856,6 @@ fabric.Collection = {
   };
 
 })();
-
-
 (function() {
 
   /* _ES5_COMPAT_START_ */
@@ -1488,8 +3922,6 @@ fabric.Collection = {
     escapeXml: escapeXml
   };
 }());
-
-
 /* _ES5_COMPAT_START_ */
 (function() {
 
@@ -1527,8 +3959,6 @@ fabric.Collection = {
 
 })();
 /* _ES5_COMPAT_END_ */
-
-
 (function() {
 
   var slice = Array.prototype.slice, emptyFunction = function() { },
@@ -1627,8 +4057,6 @@ fabric.Collection = {
 
   fabric.util.createClass = createClass;
 })();
-
-
 (function () {
 
   var unknown = 'unknown';
@@ -1855,8 +4283,6 @@ fabric.Collection = {
   fabric.util.object.extend(fabric.util, fabric.Observable);
 
 })();
-
-
 (function () {
 
   /**
@@ -1927,8 +4353,6 @@ fabric.Collection = {
   fabric.util.setStyle = setStyle;
 
 })();
-
-
 (function() {
 
   var _slice = Array.prototype.slice;
@@ -2235,8 +4659,6 @@ fabric.Collection = {
   fabric.util.getElementStyle = getElementStyle;
 
 })();
-
-
 (function() {
 
   function addParamToUrl(url, param) {
@@ -2308,8 +4730,6 @@ fabric.Collection = {
 
   fabric.util.request = request;
 })();
-
-
 /**
  * Wrapper around `console.log` (when available)
  * @param {Any} [values] Values to log
@@ -2335,82 +4755,6 @@ if (typeof console !== 'undefined') {
     }
   });
 }
-
-
-(function() {
-
-  /**
-   * Changes value from one to another within certain period of time, invoking callbacks as value is being changed.
-   * @memberOf fabric.util
-   * @param {Object} [options] Animation options
-   * @param {Function} [options.onChange] Callback; invoked on every value change
-   * @param {Function} [options.onComplete] Callback; invoked when value change is completed
-   * @param {Number} [options.startValue=0] Starting value
-   * @param {Number} [options.endValue=100] Ending value
-   * @param {Number} [options.byValue=100] Value to modify the property by
-   * @param {Function} [options.easing] Easing function
-   * @param {Number} [options.duration=500] Duration of change (in ms)
-   */
-  function animate(options) {
-
-    requestAnimFrame(function(timestamp) {
-      options || (options = { });
-
-      var start = timestamp || +new Date(),
-          duration = options.duration || 500,
-          finish = start + duration, time,
-          onChange = options.onChange || function() { },
-          abort = options.abort || function() { return false; },
-          easing = options.easing || function(t, b, c, d) {return -c * Math.cos(t / d * (Math.PI / 2)) + c + b;},
-          startValue = 'startValue' in options ? options.startValue : 0,
-          endValue = 'endValue' in options ? options.endValue : 100,
-          byValue = options.byValue || endValue - startValue;
-
-      options.onStart && options.onStart();
-
-      (function tick(ticktime) {
-        time = ticktime || +new Date();
-        var currentTime = time > finish ? duration : (time - start);
-        if (abort()) {
-          options.onComplete && options.onComplete();
-          return;
-        }
-        onChange(easing(currentTime, startValue, byValue, duration));
-        if (time > finish) {
-          options.onComplete && options.onComplete();
-          return;
-        }
-        requestAnimFrame(tick);
-      })(start);
-    });
-
-  }
-
-  var _requestAnimFrame = fabric.window.requestAnimationFrame       ||
-                          fabric.window.webkitRequestAnimationFrame ||
-                          fabric.window.mozRequestAnimationFrame    ||
-                          fabric.window.oRequestAnimationFrame      ||
-                          fabric.window.msRequestAnimationFrame     ||
-                          function(callback) {
-                            fabric.window.setTimeout(callback, 1000 / 60);
-                          };
-  /**
-    * requestAnimationFrame polyfill based on http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-    * In order to get a precise start time, `requestAnimFrame` should be called as an entry into the method
-    * @memberOf fabric.util
-    * @param {Function} callback Callback to invoke
-    * @param {DOMElement} element optional Element to associate with animation
-    */
-  function requestAnimFrame() {
-    return _requestAnimFrame.apply(fabric.window, arguments);
-  }
-
-  fabric.util.animate = animate;
-  fabric.util.requestAnimFrame = requestAnimFrame;
-
-})();
-
-
 (function() {
 
   function normalize(a, c, p, s) {
@@ -2803,1119 +5147,6 @@ if (typeof console !== 'undefined') {
   };
 
 }());
-
-
-(function(global) {
-
-  'use strict';
-
-  /**
-   * @name fabric
-   * @namespace
-   */
-
-  var fabric = global.fabric || (global.fabric = { }),
-      extend = fabric.util.object.extend,
-      capitalize = fabric.util.string.capitalize,
-      clone = fabric.util.object.clone,
-      toFixed = fabric.util.toFixed,
-      parseUnit = fabric.util.parseUnit,
-      multiplyTransformMatrices = fabric.util.multiplyTransformMatrices,
-
-      attributesMap = {
-        cx:                   'left',
-        x:                    'left',
-        r:                    'radius',
-        cy:                   'top',
-        y:                    'top',
-        display:              'visible',
-        visibility:           'visible',
-        transform:            'transformMatrix',
-        'fill-opacity':       'fillOpacity',
-        'fill-rule':          'fillRule',
-        'font-family':        'fontFamily',
-        'font-size':          'fontSize',
-        'font-style':         'fontStyle',
-        'font-weight':        'fontWeight',
-        'stroke-dasharray':   'strokeDashArray',
-        'stroke-linecap':     'strokeLineCap',
-        'stroke-linejoin':    'strokeLineJoin',
-        'stroke-miterlimit':  'strokeMiterLimit',
-        'stroke-opacity':     'strokeOpacity',
-        'stroke-width':       'strokeWidth',
-        'text-decoration':    'textDecoration',
-        'text-anchor':        'originX'
-      },
-
-      colorAttributes = {
-        stroke: 'strokeOpacity',
-        fill:   'fillOpacity'
-      };
-
-  fabric.cssRules = { };
-  fabric.gradientDefs = { };
-
-  function normalizeAttr(attr) {
-    // transform attribute names
-    if (attr in attributesMap) {
-      return attributesMap[attr];
-    }
-    return attr;
-  }
-
-  function normalizeValue(attr, value, parentAttributes, fontSize) {
-    var isArray = Object.prototype.toString.call(value) === '[object Array]',
-        parsed;
-
-    if ((attr === 'fill' || attr === 'stroke') && value === 'none') {
-      value = '';
-    }
-    else if (attr === 'strokeDashArray') {
-      value = value.replace(/,/g, ' ').split(/\s+/).map(function(n) {
-        return parseFloat(n);
-      });
-    }
-    else if (attr === 'transformMatrix') {
-      if (parentAttributes && parentAttributes.transformMatrix) {
-        value = multiplyTransformMatrices(
-          parentAttributes.transformMatrix, fabric.parseTransformAttribute(value));
-      }
-      else {
-        value = fabric.parseTransformAttribute(value);
-      }
-    }
-    else if (attr === 'visible') {
-      value = (value === 'none' || value === 'hidden') ? false : true;
-      // display=none on parent element always takes precedence over child element
-      if (parentAttributes && parentAttributes.visible === false) {
-        value = false;
-      }
-    }
-    else if (attr === 'originX' /* text-anchor */) {
-      value = value === 'start' ? 'left' : value === 'end' ? 'right' : 'center';
-    }
-    else {
-      parsed = isArray ? value.map(parseUnit) : parseUnit(value, fontSize);
-    }
-
-    return (!isArray && isNaN(parsed) ? value : parsed);
-  }
-
-  /**
-   * @private
-   * @param {Object} attributes Array of attributes to parse
-   */
-  function _setStrokeFillOpacity(attributes) {
-    for (var attr in colorAttributes) {
-
-      if (!attributes[attr] || typeof attributes[colorAttributes[attr]] === 'undefined') {
-        continue;
-      }
-
-      if (attributes[attr].indexOf('url(') === 0) {
-        continue;
-      }
-
-      var color = new fabric.Color(attributes[attr]);
-      attributes[attr] = color.setAlpha(toFixed(color.getAlpha() * attributes[colorAttributes[attr]], 2)).toRgba();
-    }
-    return attributes;
-  }
-
-  /**
-   * Parses "transform" attribute, returning an array of values
-   * @static
-   * @function
-   * @memberOf fabric
-   * @param {String} attributeValue String containing attribute value
-   * @return {Array} Array of 6 elements representing transformation matrix
-   */
-  fabric.parseTransformAttribute = (function() {
-    function rotateMatrix(matrix, args) {
-      var angle = args[0];
-
-      matrix[0] = Math.cos(angle);
-      matrix[1] = Math.sin(angle);
-      matrix[2] = -Math.sin(angle);
-      matrix[3] = Math.cos(angle);
-    }
-
-    function scaleMatrix(matrix, args) {
-      var multiplierX = args[0],
-          multiplierY = (args.length === 2) ? args[1] : args[0];
-
-      matrix[0] = multiplierX;
-      matrix[3] = multiplierY;
-    }
-
-    function skewXMatrix(matrix, args) {
-      matrix[2] = Math.tan(fabric.util.degreesToRadians(args[0]));
-    }
-
-    function skewYMatrix(matrix, args) {
-      matrix[1] = Math.tan(fabric.util.degreesToRadians(args[0]));
-    }
-
-    function translateMatrix(matrix, args) {
-      matrix[4] = args[0];
-      if (args.length === 2) {
-        matrix[5] = args[1];
-      }
-    }
-
-    // identity matrix
-    var iMatrix = [
-          1, // a
-          0, // b
-          0, // c
-          1, // d
-          0, // e
-          0  // f
-        ],
-
-        // == begin transform regexp
-        number = fabric.reNum,
-
-        commaWsp = '(?:\\s+,?\\s*|,\\s*)',
-
-        skewX = '(?:(skewX)\\s*\\(\\s*(' + number + ')\\s*\\))',
-
-        skewY = '(?:(skewY)\\s*\\(\\s*(' + number + ')\\s*\\))',
-
-        rotate = '(?:(rotate)\\s*\\(\\s*(' + number + ')(?:' +
-                    commaWsp + '(' + number + ')' +
-                    commaWsp + '(' + number + '))?\\s*\\))',
-
-        scale = '(?:(scale)\\s*\\(\\s*(' + number + ')(?:' +
-                    commaWsp + '(' + number + '))?\\s*\\))',
-
-        translate = '(?:(translate)\\s*\\(\\s*(' + number + ')(?:' +
-                    commaWsp + '(' + number + '))?\\s*\\))',
-
-        matrix = '(?:(matrix)\\s*\\(\\s*' +
-                  '(' + number + ')' + commaWsp +
-                  '(' + number + ')' + commaWsp +
-                  '(' + number + ')' + commaWsp +
-                  '(' + number + ')' + commaWsp +
-                  '(' + number + ')' + commaWsp +
-                  '(' + number + ')' +
-                  '\\s*\\))',
-
-        transform = '(?:' +
-                    matrix + '|' +
-                    translate + '|' +
-                    scale + '|' +
-                    rotate + '|' +
-                    skewX + '|' +
-                    skewY +
-                    ')',
-
-        transforms = '(?:' + transform + '(?:' + commaWsp + transform + ')*' + ')',
-
-        transformList = '^\\s*(?:' + transforms + '?)\\s*$',
-
-        // http://www.w3.org/TR/SVG/coords.html#TransformAttribute
-        reTransformList = new RegExp(transformList),
-        // == end transform regexp
-
-        reTransform = new RegExp(transform, 'g');
-
-    return function(attributeValue) {
-
-      // start with identity matrix
-      var matrix = iMatrix.concat(),
-          matrices = [ ];
-
-      // return if no argument was given or
-      // an argument does not match transform attribute regexp
-      if (!attributeValue || (attributeValue && !reTransformList.test(attributeValue))) {
-        return matrix;
-      }
-
-      attributeValue.replace(reTransform, function(match) {
-
-        var m = new RegExp(transform).exec(match).filter(function (match) {
-              return (match !== '' && match != null);
-            }),
-            operation = m[1],
-            args = m.slice(2).map(parseFloat);
-
-        switch (operation) {
-          case 'translate':
-            translateMatrix(matrix, args);
-            break;
-          case 'rotate':
-            args[0] = fabric.util.degreesToRadians(args[0]);
-            rotateMatrix(matrix, args);
-            break;
-          case 'scale':
-            scaleMatrix(matrix, args);
-            break;
-          case 'skewX':
-            skewXMatrix(matrix, args);
-            break;
-          case 'skewY':
-            skewYMatrix(matrix, args);
-            break;
-          case 'matrix':
-            matrix = args;
-            break;
-        }
-
-        // snapshot current matrix into matrices array
-        matrices.push(matrix.concat());
-        // reset
-        matrix = iMatrix.concat();
-      });
-
-      var combinedMatrix = matrices[0];
-      while (matrices.length > 1) {
-        matrices.shift();
-        combinedMatrix = fabric.util.multiplyTransformMatrices(combinedMatrix, matrices[0]);
-      }
-      return combinedMatrix;
-    };
-  })();
-
-  /**
-   * @private
-   */
-  function parseStyleString(style, oStyle) {
-    var attr, value;
-    style.replace(/;$/, '').split(';').forEach(function (chunk) {
-      var pair = chunk.split(':');
-
-      attr = normalizeAttr(pair[0].trim().toLowerCase());
-      value = normalizeValue(attr, pair[1].trim());
-
-      oStyle[attr] = value;
-    });
-  }
-
-  /**
-   * @private
-   */
-  function parseStyleObject(style, oStyle) {
-    var attr, value;
-    for (var prop in style) {
-      if (typeof style[prop] === 'undefined') {
-        continue;
-      }
-
-      attr = normalizeAttr(prop.toLowerCase());
-      value = normalizeValue(attr, style[prop]);
-
-      oStyle[attr] = value;
-    }
-  }
-
-  /**
-   * @private
-   */
-  function getGlobalStylesForElement(element, svgUid) {
-    var styles = { };
-    for (var rule in fabric.cssRules[svgUid]) {
-      if (elementMatchesRule(element, rule.split(' '))) {
-        for (var property in fabric.cssRules[svgUid][rule]) {
-          styles[property] = fabric.cssRules[svgUid][rule][property];
-        }
-      }
-    }
-    return styles;
-  }
-
-  /**
-   * @private
-   */
-  function elementMatchesRule(element, selectors) {
-    var firstMatching, parentMatching = true;
-    //start from rightmost selector.
-    firstMatching = selectorMatches(element, selectors.pop());
-    if (firstMatching && selectors.length) {
-      parentMatching = doesSomeParentMatch(element, selectors);
-    }
-    return firstMatching && parentMatching && (selectors.length === 0);
-  }
-
-  function doesSomeParentMatch(element, selectors) {
-    var selector, parentMatching = true;
-    while (element.parentNode && element.parentNode.nodeType === 1 && selectors.length) {
-      if (parentMatching) {
-        selector = selectors.pop();
-      }
-      element = element.parentNode;
-      parentMatching = selectorMatches(element, selector);
-    }
-    return selectors.length === 0;
-  }
-  /**
-   * @private
-   */
-  function selectorMatches(element, selector) {
-    var nodeName = element.nodeName,
-        classNames = element.getAttribute('class'),
-        id = element.getAttribute('id'), matcher;
-    // i check if a selector matches slicing away part from it.
-    // if i get empty string i should match
-    matcher = new RegExp('^' + nodeName, 'i');
-    selector = selector.replace(matcher, '');
-    if (id && selector.length) {
-      matcher = new RegExp('#' + id + '(?![a-zA-Z\\-]+)', 'i');
-      selector = selector.replace(matcher, '');
-    }
-    if (classNames && selector.length) {
-      classNames = classNames.split(' ');
-      for (var i = classNames.length; i--;) {
-        matcher = new RegExp('\\.' + classNames[i] + '(?![a-zA-Z\\-]+)', 'i');
-        selector = selector.replace(matcher, '');
-      }
-    }
-    return selector.length === 0;
-  }
-
-  /**
-   * @private
-   */
-  function parseUseDirectives(doc) {
-    var nodelist = doc.getElementsByTagName('use');
-    while (nodelist.length) {
-      var el = nodelist[0],
-          xlink = el.getAttribute('xlink:href').substr(1),
-          x = el.getAttribute('x') || 0,
-          y = el.getAttribute('y') || 0,
-          el2 = doc.getElementById(xlink).cloneNode(true),
-          currentTrans = (el2.getAttribute('transform') || '') + ' translate(' + x + ', ' + y + ')',
-          parentNode;
-
-      for (var j = 0, attrs = el.attributes, l = attrs.length; j < l; j++) {
-        var attr = attrs.item(j);
-        if (attr.nodeName === 'x' || attr.nodeName === 'y' || attr.nodeName === 'xlink:href') {
-          continue;
-        }
-
-        if (attr.nodeName === 'transform') {
-          currentTrans = attr.nodeValue + ' ' + currentTrans;
-        }
-        else {
-          el2.setAttribute(attr.nodeName, attr.nodeValue);
-        }
-      }
-
-      el2.setAttribute('transform', currentTrans);
-      el2.setAttribute('instantiated_by_use', '1');
-      el2.removeAttribute('id');
-      parentNode = el.parentNode;
-      parentNode.replaceChild(el2, el);
-    }
-  }
-
-  // http://www.w3.org/TR/SVG/coords.html#ViewBoxAttribute
-  // matches, e.g.: +14.56e-12, etc.
-  var reViewBoxAttrValue = new RegExp(
-    '^' +
-    '\\s*(' + fabric.reNum + '+)\\s*,?' +
-    '\\s*(' + fabric.reNum + '+)\\s*,?' +
-    '\\s*(' + fabric.reNum + '+)\\s*,?' +
-    '\\s*(' + fabric.reNum + '+)\\s*' +
-    '$'
-  );
-
-  /**
-   * Add a <g> element that envelop all child elements and makes the viewbox transformMatrix descend on all elements
-   */
-  function addVBTransform(element, widthAttr, heightAttr) {
-
-    var viewBoxAttr = element.getAttribute('viewBox'),
-        scaleX = 1,
-        scaleY = 1,
-        minX = 0,
-        minY = 0,
-        viewBoxWidth, viewBoxHeight, matrix, el;
-
-    if (viewBoxAttr && (viewBoxAttr = viewBoxAttr.match(reViewBoxAttrValue))) {
-      minX = -parseFloat(viewBoxAttr[1]),
-      minY = -parseFloat(viewBoxAttr[2]),
-      viewBoxWidth = parseFloat(viewBoxAttr[3]),
-      viewBoxHeight = parseFloat(viewBoxAttr[4]);
-    }
-    else {
-      return;
-    }
-    if (widthAttr && widthAttr !== viewBoxWidth) {
-      scaleX = widthAttr / viewBoxWidth;
-    }
-    if (heightAttr && heightAttr !== viewBoxHeight) {
-      scaleY = heightAttr / viewBoxHeight;
-    }
-
-    // default is to preserve aspect ratio
-    // preserveAspectRatio attribute to be implemented
-    scaleY = scaleX = (scaleX > scaleY ? scaleY : scaleX);
-
-    if (!(scaleX !== 1 || scaleY !== 1 || minX !== 0 || minY !== 0)) {
-      return;
-    }
-    matrix = ' matrix(' + scaleX +
-                  ' 0' +
-                  ' 0 ' +
-                  scaleY + ' ' +
-                  (minX * scaleX) + ' ' +
-                  (minY * scaleY) + ') ';
-
-    if (element.tagName === 'svg') {
-      el = element.ownerDocument.createElement('g');
-      while (element.firstChild != null) {
-        el.appendChild(element.firstChild);
-      }
-      element.appendChild(el);
-    }
-    else {
-      el = element;
-      matrix = el.getAttribute('transform') + matrix;
-    }
-
-    el.setAttribute('transform', matrix);
-  }
-
-  /**
-   * Parses an SVG document, converts it to an array of corresponding fabric.* instances and passes them to a callback
-   * @static
-   * @function
-   * @memberOf fabric
-   * @param {SVGDocument} doc SVG document to parse
-   * @param {Function} callback Callback to call when parsing is finished; It's being passed an array of elements (parsed from a document).
-   * @param {Function} [reviver] Method for further parsing of SVG elements, called after each fabric object created.
-   */
-  fabric.parseSVGDocument = (function() {
-
-    var reAllowedSVGTagNames = /^(path|circle|polygon|polyline|ellipse|rect|line|image|text)$/,
-        reViewBoxTagNames = /^(symbol|image|marker|pattern|view)$/;
-
-    function hasAncestorWithNodeName(element, nodeName) {
-      while (element && (element = element.parentNode)) {
-        if (nodeName.test(element.nodeName) && !element.getAttribute('instantiated_by_use')) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    return function(doc, callback, reviver) {
-      if (!doc) {
-        return;
-      }
-
-      parseUseDirectives(doc);
-
-      var startTime = new Date(),
-          svgUid =  fabric.Object.__uid++,
-          widthAttr, heightAttr, toBeParsed = false;
-
-      if (doc.getAttribute('width') && doc.getAttribute('width') !== '100%') {
-        widthAttr = parseUnit(doc.getAttribute('width'));
-      }
-      if (doc.getAttribute('height') && doc.getAttribute('height') !== '100%') {
-        heightAttr = parseUnit(doc.getAttribute('height'));
-      }
-
-      if (!widthAttr || !heightAttr) {
-        var viewBoxAttr = doc.getAttribute('viewBox');
-        if (viewBoxAttr && (viewBoxAttr = viewBoxAttr.match(reViewBoxAttrValue))) {
-          widthAttr = parseFloat(viewBoxAttr[3]),
-          heightAttr = parseFloat(viewBoxAttr[4]);
-        }
-        else {
-          toBeParsed = true;
-        }
-      }
-
-      addVBTransform(doc, widthAttr, heightAttr);
-
-      var descendants = fabric.util.toArray(doc.getElementsByTagName('*'));
-
-      if (descendants.length === 0 && fabric.isLikelyNode) {
-        // we're likely in node, where "o3-xml" library fails to gEBTN("*")
-        // https://github.com/ajaxorg/node-o3-xml/issues/21
-        descendants = doc.selectNodes('//*[name(.)!="svg"]');
-        var arr = [ ];
-        for (var i = 0, len = descendants.length; i < len; i++) {
-          arr[i] = descendants[i];
-        }
-        descendants = arr;
-      }
-
-      var elements = descendants.filter(function(el) {
-        reViewBoxTagNames.test(el.tagName) && addVBTransform(el, 0, 0);
-        return reAllowedSVGTagNames.test(el.tagName) &&
-              !hasAncestorWithNodeName(el, /^(?:pattern|defs|symbol)$/); // http://www.w3.org/TR/SVG/struct.html#DefsElement
-      });
-
-      if (!elements || (elements && !elements.length)) {
-        callback && callback([], {});
-        return;
-      }
-
-      var options = {
-        width: widthAttr,
-        height: heightAttr,
-        svgUid: svgUid,
-        toBeParsed: toBeParsed
-      };
-
-      fabric.gradientDefs[svgUid] = fabric.getGradientDefs(doc);
-      fabric.cssRules[svgUid] = fabric.getCSSRules(doc);
-      // Precedence of rules:   style > class > attribute
-      fabric.parseElements(elements, function(instances) {
-        fabric.documentParsingTime = new Date() - startTime;
-        if (callback) {
-          callback(instances, options);
-        }
-      }, clone(options), reviver);
-    };
-  })();
-
-  /**
-   * Used for caching SVG documents (loaded via `fabric.Canvas#loadSVGFromURL`)
-   * @namespace
-   */
-  var svgCache = {
-
-    /**
-    * @param {String} name
-    * @param {Function} callback
-    */
-    has: function (name, callback) {
-      callback(false);
-    },
-
-    get: function () {
-      /* NOOP */
-    },
-
-    set: function () {
-      /* NOOP */
-    }
-  };
-
-  /**
-   * @private
-   */
-  function _enlivenCachedObject(cachedObject) {
-
-    var objects = cachedObject.objects,
-        options = cachedObject.options;
-
-    objects = objects.map(function (o) {
-      return fabric[capitalize(o.type)].fromObject(o);
-    });
-
-    return ({ objects: objects, options: options });
-  }
-
-  /**
-   * @private
-   */
-  function _createSVGPattern(markup, canvas, property) {
-    if (canvas[property] && canvas[property].toSVG) {
-      markup.push(
-        '<pattern x="0" y="0" id="', property, 'Pattern" ',
-          'width="', canvas[property].source.width,
-          '" height="', canvas[property].source.height,
-          '" patternUnits="userSpaceOnUse">',
-        '<image x="0" y="0" ',
-        'width="', canvas[property].source.width,
-        '" height="', canvas[property].source.height,
-        '" xlink:href="', canvas[property].source.src,
-        '"></image></pattern>'
-      );
-    }
-  }
-
-  var reFontDeclaration = new RegExp(
-    '(normal|italic)?\\s*(normal|small-caps)?\\s*' +
-    '(normal|bold|bolder|lighter|100|200|300|400|500|600|700|800|900)?\\s*(' +
-      fabric.reNum +
-    '(?:px|cm|mm|em|pt|pc|in)*)(?:\\/(normal|' + fabric.reNum + '))?\\s+(.*)');
-
-  extend(fabric, {
-    /**
-     * Parses a short font declaration, building adding its properties to a style object
-     * @static
-     * @function
-     * @memberOf fabric
-     * @param {String} value font declaration
-     * @param {Object} oStyle definition
-     */
-    parseFontDeclaration: function(value, oStyle) {
-      var match = value.match(reFontDeclaration);
-
-      if (!match) {
-        return;
-      }
-      var fontStyle = match[1],
-          // font variant is not used
-          // fontVariant = match[2],
-          fontWeight = match[3],
-          fontSize = match[4],
-          lineHeight = match[5],
-          fontFamily = match[6];
-
-      if (fontStyle) {
-        oStyle.fontStyle = fontStyle;
-      }
-      if (fontWeight) {
-        oStyle.fontWeight = isNaN(parseFloat(fontWeight)) ? fontWeight : parseFloat(fontWeight);
-      }
-      if (fontSize) {
-        oStyle.fontSize = parseUnit(fontSize);
-      }
-      if (fontFamily) {
-        oStyle.fontFamily = fontFamily;
-      }
-      if (lineHeight) {
-        oStyle.lineHeight = lineHeight === 'normal' ? 1 : lineHeight;
-      }
-    },
-
-    /**
-     * Parses an SVG document, returning all of the gradient declarations found in it
-     * @static
-     * @function
-     * @memberOf fabric
-     * @param {SVGDocument} doc SVG document to parse
-     * @return {Object} Gradient definitions; key corresponds to element id, value -- to gradient definition element
-     */
-    getGradientDefs: function(doc) {
-      var linearGradientEls = doc.getElementsByTagName('linearGradient'),
-          radialGradientEls = doc.getElementsByTagName('radialGradient'),
-          el, i, j = 0, id, xlink, elList = [ ],
-          gradientDefs = { }, idsToXlinkMap = { };
-
-      elList.length = linearGradientEls.length + radialGradientEls.length;
-      i = linearGradientEls.length;
-      while (i--) {
-        elList[j++] = linearGradientEls[i];
-      }
-      i = radialGradientEls.length;
-      while (i--) {
-        elList[j++] = radialGradientEls[i];
-      }
-
-      while (j--) {
-        el = elList[j];
-        xlink = el.getAttribute('xlink:href');
-        id = el.getAttribute('id');
-        if (xlink) {
-          idsToXlinkMap[id] = xlink.substr(1);
-        }
-        gradientDefs[id] = el;
-      }
-
-      for (id in idsToXlinkMap) {
-        var el2 = gradientDefs[idsToXlinkMap[id]].cloneNode(true);
-        el = gradientDefs[id];
-        while (el2.firstChild) {
-          el.appendChild(el2.firstChild);
-        }
-      }
-      return gradientDefs;
-    },
-
-    /**
-     * Returns an object of attributes' name/value, given element and an array of attribute names;
-     * Parses parent "g" nodes recursively upwards.
-     * @static
-     * @memberOf fabric
-     * @param {DOMElement} element Element to parse
-     * @param {Array} attributes Array of attributes to parse
-     * @return {Object} object containing parsed attributes' names/values
-     */
-    parseAttributes: function(element, attributes, svgUid) {
-
-      if (!element) {
-        return;
-      }
-
-      var value,
-          parentAttributes = { },
-          fontSize;
-
-      if (typeof svgUid === 'undefined') {
-        svgUid = element.getAttribute('svgUid');
-      }
-      // if there's a parent container (`g` or `a` or `symbol` node), parse its attributes recursively upwards
-      if (element.parentNode && /^symbol|[g|a]$/i.test(element.parentNode.nodeName)) {
-        parentAttributes = fabric.parseAttributes(element.parentNode, attributes, svgUid);
-      }
-      fontSize = (parentAttributes && parentAttributes.fontSize ) ||
-                 element.getAttribute('font-size') || fabric.Text.DEFAULT_SVG_FONT_SIZE;
-
-      var ownAttributes = attributes.reduce(function(memo, attr) {
-        value = element.getAttribute(attr);
-        if (value) {
-          attr = normalizeAttr(attr);
-          value = normalizeValue(attr, value, parentAttributes, fontSize);
-
-          memo[attr] = value;
-        }
-        return memo;
-      }, { });
-
-      // add values parsed from style, which take precedence over attributes
-      // (see: http://www.w3.org/TR/SVG/styling.html#UsingPresentationAttributes)
-      ownAttributes = extend(ownAttributes,
-        extend(getGlobalStylesForElement(element, svgUid), fabric.parseStyleAttribute(element)));
-      if (ownAttributes.font) {
-        fabric.parseFontDeclaration(ownAttributes.font, ownAttributes);
-      }
-      return _setStrokeFillOpacity(extend(parentAttributes, ownAttributes));
-    },
-
-    /**
-     * Transforms an array of svg elements to corresponding fabric.* instances
-     * @static
-     * @memberOf fabric
-     * @param {Array} elements Array of elements to parse
-     * @param {Function} callback Being passed an array of fabric instances (transformed from SVG elements)
-     * @param {Object} [options] Options object
-     * @param {Function} [reviver] Method for further parsing of SVG elements, called after each fabric object created.
-     */
-    parseElements: function(elements, callback, options, reviver) {
-      new fabric.ElementsParser(elements, callback, options, reviver).parse();
-    },
-
-    /**
-     * Parses "style" attribute, retuning an object with values
-     * @static
-     * @memberOf fabric
-     * @param {SVGElement} element Element to parse
-     * @return {Object} Objects with values parsed from style attribute of an element
-     */
-    parseStyleAttribute: function(element) {
-      var oStyle = { },
-          style = element.getAttribute('style');
-
-      if (!style) {
-        return oStyle;
-      }
-
-      if (typeof style === 'string') {
-        parseStyleString(style, oStyle);
-      }
-      else {
-        parseStyleObject(style, oStyle);
-      }
-
-      return oStyle;
-    },
-
-    /**
-     * Parses "points" attribute, returning an array of values
-     * @static
-     * @memberOf fabric
-     * @param {String} points points attribute string
-     * @return {Array} array of points
-     */
-    parsePointsAttribute: function(points) {
-
-      // points attribute is required and must not be empty
-      if (!points) {
-        return null;
-      }
-
-      // replace commas with whitespace and remove bookending whitespace
-      points = points.replace(/,/g, ' ').trim();
-
-      points = points.split(/\s+/);
-      var parsedPoints = [ ], i, len;
-
-      i = 0;
-      len = points.length;
-      for (; i < len; i+=2) {
-        parsedPoints.push({
-          x: parseFloat(points[i]),
-          y: parseFloat(points[i + 1])
-        });
-      }
-
-      // odd number of points is an error
-      // if (parsedPoints.length % 2 !== 0) {
-      //   return null;
-      // }
-
-      return parsedPoints;
-    },
-
-    /**
-     * Returns CSS rules for a given SVG document
-     * @static
-     * @function
-     * @memberOf fabric
-     * @param {SVGDocument} doc SVG document to parse
-     * @return {Object} CSS rules of this document
-     */
-    getCSSRules: function(doc) {
-      var styles = doc.getElementsByTagName('style'),
-          allRules = { }, rules;
-
-      // very crude parsing of style contents
-      for (var i = 0, len = styles.length; i < len; i++) {
-        var styleContents = styles[i].textContent;
-
-        // remove comments
-        styleContents = styleContents.replace(/\/\*[\s\S]*?\*\//g, '');
-        if (styleContents.trim() === '') {
-          continue;
-        }
-        rules = styleContents.match(/[^{]*\{[\s\S]*?\}/g);
-        rules = rules.map(function(rule) { return rule.trim(); });
-
-        rules.forEach(function(rule) {
-
-          var match = rule.match(/([\s\S]*?)\s*\{([^}]*)\}/),
-          ruleObj = { }, declaration = match[2].trim(),
-          propertyValuePairs = declaration.replace(/;$/, '').split(/\s*;\s*/);
-
-          for (var i = 0, len = propertyValuePairs.length; i < len; i++) {
-            var pair = propertyValuePairs[i].split(/\s*:\s*/),
-                property = normalizeAttr(pair[0]),
-                value = normalizeValue(property, pair[1], pair[0]);
-            ruleObj[property] = value;
-          }
-          rule = match[1];
-          rule.split(',').forEach(function(_rule) {
-            _rule = _rule.replace(/^svg/i, '').trim();
-            if (_rule === '') {
-              return;
-            }
-            allRules[_rule] = fabric.util.object.clone(ruleObj);
-          });
-        });
-      }
-      return allRules;
-    },
-
-    /**
-     * Takes url corresponding to an SVG document, and parses it into a set of fabric objects. Note that SVG is fetched via XMLHttpRequest, so it needs to conform to SOP (Same Origin Policy)
-     * @memberof fabric
-     * @param {String} url
-     * @param {Function} callback
-     * @param {Function} [reviver] Method for further parsing of SVG elements, called after each fabric object created.
-     */
-    loadSVGFromURL: function(url, callback, reviver) {
-
-      url = url.replace(/^\n\s*/, '').trim();
-      svgCache.has(url, function (hasUrl) {
-        if (hasUrl) {
-          svgCache.get(url, function (value) {
-            var enlivedRecord = _enlivenCachedObject(value);
-            callback(enlivedRecord.objects, enlivedRecord.options);
-          });
-        }
-        else {
-          new fabric.util.request(url, {
-            method: 'get',
-            onComplete: onComplete
-          });
-        }
-      });
-
-      function onComplete(r) {
-
-        var xml = r.responseXML;
-        if (xml && !xml.documentElement && fabric.window.ActiveXObject && r.responseText) {
-          xml = new ActiveXObject('Microsoft.XMLDOM');
-          xml.async = 'false';
-          //IE chokes on DOCTYPE
-          xml.loadXML(r.responseText.replace(/<!DOCTYPE[\s\S]*?(\[[\s\S]*\])*?>/i, ''));
-        }
-        if (!xml || !xml.documentElement) {
-          return;
-        }
-
-        fabric.parseSVGDocument(xml.documentElement, function (results, options) {
-          svgCache.set(url, {
-            objects: fabric.util.array.invoke(results, 'toObject'),
-            options: options
-          });
-          callback(results, options);
-        }, reviver);
-      }
-    },
-
-    /**
-     * Takes string corresponding to an SVG document, and parses it into a set of fabric objects
-     * @memberof fabric
-     * @param {String} string
-     * @param {Function} callback
-     * @param {Function} [reviver] Method for further parsing of SVG elements, called after each fabric object created.
-     */
-    loadSVGFromString: function(string, callback, reviver) {
-      string = string.trim();
-      var doc;
-      if (typeof DOMParser !== 'undefined') {
-        var parser = new DOMParser();
-        if (parser && parser.parseFromString) {
-          doc = parser.parseFromString(string, 'text/xml');
-        }
-      }
-      else if (fabric.window.ActiveXObject) {
-        doc = new ActiveXObject('Microsoft.XMLDOM');
-        doc.async = 'false';
-        // IE chokes on DOCTYPE
-        doc.loadXML(string.replace(/<!DOCTYPE[\s\S]*?(\[[\s\S]*\])*?>/i, ''));
-      }
-
-      fabric.parseSVGDocument(doc.documentElement, function (results, options) {
-        callback(results, options);
-      }, reviver);
-    },
-
-    /**
-     * Creates markup containing SVG font faces
-     * @param {Array} objects Array of fabric objects
-     * @return {String}
-     */
-    createSVGFontFacesMarkup: function(objects) {
-      var markup = '';
-
-      for (var i = 0, len = objects.length; i < len; i++) {
-        if (objects[i].type !== 'text' || !objects[i].path) {
-          continue;
-        }
-
-        markup += [
-          //jscs:disable validateIndentation
-          '@font-face {',
-            'font-family: ', objects[i].fontFamily, '; ',
-            'src: url(\'', objects[i].path, '\')',
-          '}'
-          //jscs:enable validateIndentation
-        ].join('');
-      }
-
-      if (markup) {
-        markup = [
-          //jscs:disable validateIndentation
-          '<style type="text/css">',
-            '<![CDATA[',
-              markup,
-            ']]>',
-          '</style>'
-          //jscs:enable validateIndentation
-        ].join('');
-      }
-
-      return markup;
-    },
-
-    /**
-     * Creates markup containing SVG referenced elements like patterns, gradients etc.
-     * @param {fabric.Canvas} canvas instance of fabric.Canvas
-     * @return {String}
-     */
-    createSVGRefElementsMarkup: function(canvas) {
-      var markup = [ ];
-
-      _createSVGPattern(markup, canvas, 'backgroundColor');
-      _createSVGPattern(markup, canvas, 'overlayColor');
-
-      return markup.join('');
-    }
-  });
-
-})(typeof exports !== 'undefined' ? exports : this);
-
-
-fabric.ElementsParser = function(elements, callback, options, reviver) {
-  this.elements = elements;
-  this.callback = callback;
-  this.options = options;
-  this.reviver = reviver;
-  this.svgUid = (options && options.svgUid) || 0;
-};
-
-fabric.ElementsParser.prototype.parse = function() {
-  this.instances = new Array(this.elements.length);
-  this.numElements = this.elements.length;
-
-  this.createObjects();
-};
-
-fabric.ElementsParser.prototype.createObjects = function() {
-  for (var i = 0, len = this.elements.length; i < len; i++) {
-    this.elements[i].setAttribute('svgUid', this.svgUid);
-    (function(_this, i) {
-      setTimeout(function() {
-        _this.createObject(_this.elements[i], i);
-      }, 0);
-    })(this, i);
-  }
-};
-
-fabric.ElementsParser.prototype.createObject = function(el, index) {
-  var klass = fabric[fabric.util.string.capitalize(el.tagName)];
-  if (klass && klass.fromElement) {
-    try {
-      this._createObject(klass, el, index);
-    }
-    catch (err) {
-      fabric.log(err);
-    }
-  }
-  else {
-    this.checkIfDone();
-  }
-};
-
-fabric.ElementsParser.prototype._createObject = function(klass, el, index) {
-  if (klass.async) {
-    klass.fromElement(el, this.createCallback(index, el), this.options);
-  }
-  else {
-    var obj = klass.fromElement(el, this.options);
-    this.resolveGradient(obj, 'fill');
-    this.resolveGradient(obj, 'stroke');
-    this.reviver && this.reviver(el, obj);
-    this.instances[index] = obj;
-    this.checkIfDone();
-  }
-};
-
-fabric.ElementsParser.prototype.createCallback = function(index, el) {
-  var _this = this;
-  return function(obj) {
-    _this.resolveGradient(obj, 'fill');
-    _this.resolveGradient(obj, 'stroke');
-    _this.reviver && _this.reviver(el, obj);
-    _this.instances[index] = obj;
-    _this.checkIfDone();
-  };
-};
-
-fabric.ElementsParser.prototype.resolveGradient = function(obj, property) {
-
-  var instanceFillValue = obj.get(property);
-  if (!(/^url\(/).test(instanceFillValue)) {
-    return;
-  }
-  var gradientId = instanceFillValue.slice(5, instanceFillValue.length - 1);
-  if (fabric.gradientDefs[this.svgUid][gradientId]) {
-    obj.set(property,
-      fabric.Gradient.fromElement(fabric.gradientDefs[this.svgUid][gradientId], obj));
-  }
-};
-
-fabric.ElementsParser.prototype.checkIfDone = function() {
-  if (--this.numElements === 0) {
-    this.instances = this.instances.filter(function(el) {
-      return el != null;
-    });
-    this.callback(this.instances);
-  }
-};
-
-
 (function(global) {
 
   'use strict';
@@ -4205,8 +5436,6 @@ fabric.ElementsParser.prototype.checkIfDone = function() {
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -4367,8 +5596,6 @@ fabric.ElementsParser.prototype.checkIfDone = function() {
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -4853,8 +6080,6 @@ fabric.ElementsParser.prototype.checkIfDone = function() {
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function() {
 
   /* _FROM_SVG_START_ */
@@ -5287,8 +6512,6 @@ fabric.ElementsParser.prototype.checkIfDone = function() {
     return ellipseMatrix;
   }
 })();
-
-
 /**
  * Pattern class
  * @class fabric.Pattern
@@ -5452,8 +6675,6 @@ fabric.Pattern = fabric.util.createClass(/** @lends fabric.Pattern.prototype */ 
     return ctx.createPattern(source, this.repeat);
   }
 });
-
-
 (function(global) {
 
   'use strict';
@@ -5636,8 +6857,6 @@ fabric.Pattern = fabric.util.createClass(/** @lends fabric.Pattern.prototype */ 
   fabric.Shadow.reOffsetsAndBlur = /(?:\s|^)(-?\d+(?:px)?(?:\s?|$))?(-?\d+(?:px)?(?:\s?|$))?(\d+(?:px)?)?(?:\s?|$)(?:$|\s)/;
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function () {
 
   'use strict';
@@ -7233,8 +8452,6 @@ fabric.Pattern = fabric.util.createClass(/** @lends fabric.Pattern.prototype */ 
   fabric.StaticCanvas.prototype.toJSON = fabric.StaticCanvas.prototype.toObject;
 
 })();
-
-
 /**
  * BaseBrush class
  * @class fabric.BaseBrush
@@ -7341,8 +8558,6 @@ fabric.BaseBrush = fabric.util.createClass(/** @lends fabric.BaseBrush.prototype
     ctx.shadowBlur = ctx.shadowOffsetX = ctx.shadowOffsetY = 0;
   }
 });
-
-
 (function() {
 
   /**
@@ -7562,8 +8777,6 @@ fabric.BaseBrush = fabric.util.createClass(/** @lends fabric.BaseBrush.prototype
     }
   });
 })();
-
-
 /**
  * CircleBrush class
  * @class fabric.CircleBrush
@@ -7682,8 +8895,6 @@ fabric.CircleBrush = fabric.util.createClass(fabric.BaseBrush, /** @lends fabric
     return pointerPoint;
   }
 });
-
-
 /**
  * SprayBrush class
  * @class fabric.SprayBrush
@@ -7889,8 +9100,6 @@ fabric.SprayBrush = fabric.util.createClass( fabric.BaseBrush, /** @lends fabric
     this.sprayChunks.push(this.sprayChunkPoints);
   }
 });
-
-
 /**
  * PatternBrush class
  * @class fabric.PatternBrush
@@ -7946,8 +9155,6 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
     return path;
   }
 });
-
-
 (function() {
 
   var getPointer = fabric.util.getPointer,
@@ -9110,8 +10317,6 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
    */
   fabric.Element = fabric.Canvas;
 })();
-
-
 (function() {
 
   var cursorOffset = {
@@ -9845,8 +11050,6 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
     }
   });
 })();
-
-
 (function() {
 
   var min = Math.min,
@@ -10045,8 +11248,6 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
   });
 
 })();
-
-
 fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.StaticCanvas.prototype */ {
 
   /**
@@ -10272,8 +11473,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
     });
   }
 });
-
-
 fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.StaticCanvas.prototype */ {
 
   /**
@@ -10489,8 +11688,163 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
     }
   }
 });
+/**
+ * Adds support for multi-touch gestures using the Event.js library.
+ * Fires the following custom events:
+ * - touch:gesture
+ * - touch:drag
+ * - touch:orientation
+ * - touch:shake
+ * - touch:longpress
+ */
+(function() {
 
+  var degreesToRadians = fabric.util.degreesToRadians,
+          radiansToDegrees = fabric.util.radiansToDegrees;
 
+  fabric.util.object.extend(fabric.Canvas.prototype, /** @lends fabric.Canvas.prototype */ {
+    /**
+     * Method that defines actions when an Event.js gesture is detected on an object. Currently only supports
+     * 2 finger gestures.
+     * @param {Event} e Event object by Event.js
+     * @param {Event} self Event proxy object by Event.js
+     */
+    __onTransformGesture: function(e, self) {
+
+      if (this.isDrawingMode || !e.touches || e.touches.length !== 2 || 'gesture' !== self.gesture) {
+        return;
+      }
+
+      var target = this.findTarget(e);
+      if ('undefined' !== typeof target) {
+        this.__gesturesParams = {
+          e: e,
+          self: self,
+          target: target
+        };
+
+        this.__gesturesRenderer();
+      }
+
+      this.fire('touch:gesture', {
+        target: target, e: e, self: self
+      });
+    },
+    __gesturesParams: null,
+    __gesturesRenderer: function() {
+
+      if (this.__gesturesParams === null || this._currentTransform === null) {
+        return;
+      }
+
+      var self = this.__gesturesParams.self,
+              t = this._currentTransform;
+
+      t.action = 'scale';
+      t.originX = t.originY = 'center';
+      this._setOriginToCenter(t.target);
+
+      this._scaleObjectBy(self.scale);
+
+      if (self.rotation !== 0) {
+        t.action = 'rotate';
+        this._rotateObjectByAngle(self.rotation);
+      }
+
+      this.renderAll();
+      t.action = 'drag';
+    },
+    /**
+     * Method that defines actions when an Event.js drag is detected.
+     *
+     * @param {Event} e Event object by Event.js
+     * @param {Event} self Event proxy object by Event.js
+     */
+    __onDrag: function(e, self) {
+      this.fire('touch:drag', {
+        e: e, self: self
+      });
+    },
+    /**
+     * Method that defines actions when an Event.js orientation event is detected.
+     *
+     * @param {Event} e Event object by Event.js
+     * @param {Event} self Event proxy object by Event.js
+     */
+    __onOrientationChange: function(e, self) {
+      this.fire('touch:orientation', {
+        e: e, self: self
+      });
+    },
+    /**
+     * Method that defines actions when an Event.js shake event is detected.
+     *
+     * @param {Event} e Event object by Event.js
+     * @param {Event} self Event proxy object by Event.js
+     */
+    __onShake: function(e, self) {
+      this.fire('touch:shake', {
+        e: e, self: self
+      });
+    },
+    /**
+     * Method that defines actions when an Event.js longpress event is detected.
+     *
+     * @param {Event} e Event object by Event.js
+     * @param {Event} self Event proxy object by Event.js
+     */
+    __onLongPress: function(e, self) {
+      this.fire('touch:longpress', {
+        e: e, self: self
+      });
+    },
+    /**
+     * Scales an object by a factor
+     * @param {Number} s The scale factor to apply to the current scale level
+     * @param {String} by Either 'x' or 'y' - specifies dimension constraint by which to scale an object.
+     *                    When not provided, an object is scaled by both dimensions equally
+     */
+    _scaleObjectBy: function(s, by) {
+      var t = this._currentTransform,
+              target = t.target,
+              lockScalingX = target.get('lockScalingX'),
+              lockScalingY = target.get('lockScalingY');
+
+      if (lockScalingX && lockScalingY) {
+        return;
+      }
+
+      target._scaling = true;
+
+      var constraintPosition = target.translateToOriginPoint(target.getCenterPoint(), t.originX, t.originY);
+
+      if (!by) {
+        t.newScaleX = t.scaleX * s;
+        t.newScaleY = t.scaleY * s;
+        if (!lockScalingX) {
+          target.set('scaleX', t.scaleX * s);
+        }
+        if (!lockScalingY) {
+          target.set('scaleY', t.scaleY * s);
+        }
+      }
+
+      target.setPositionByOrigin(constraintPosition, t.originX, t.originY);
+    },
+    /**
+     * Rotates object by an angle
+     * @param {Number} curAngle The angle of rotation in degrees
+     */
+    _rotateObjectByAngle: function(curAngle) {
+      var t = this._currentTransform;
+
+      if (t.target.get('lockRotation')) {
+        return;
+      }
+      t.target.angle = radiansToDegrees(degreesToRadians(curAngle) + t.theta);
+    }
+  });
+})();
 (function(global) {
 
   'use strict';
@@ -12011,8 +13365,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
   fabric.Object.__uid = 0;
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function() {
 
   var degreesToRadians = fabric.util.degreesToRadians;
@@ -12261,8 +13613,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
   });
 
 })();
-
-
 (function() {
 
   var degreesToRadians = fabric.util.degreesToRadians;
@@ -12639,8 +13989,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
     }
   });
 })();
-
-
 fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prototype */ {
 
   /**
@@ -12721,8 +14069,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     return this;
   }
 });
-
-
 /* _TO_SVG_START_ */
 fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prototype */ {
 
@@ -12838,8 +14184,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
   }
 });
 /* _TO_SVG_END_ */
-
-
 /*
   Depends on `stateProperties`
 */
@@ -12885,8 +14229,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     return this;
   }
 });
-
-
 (function() {
 
   var degreesToRadians = fabric.util.degreesToRadians,
@@ -13241,236 +14583,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     }
   });
 })();
-
-
-fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.StaticCanvas.prototype */ {
-
-  /**
-   * Animation duration (in ms) for fx* methods
-   * @type Number
-   * @default
-   */
-  FX_DURATION: 500,
-
-  /**
-   * Centers object horizontally with animation.
-   * @param {fabric.Object} object Object to center
-   * @param {Object} [callbacks] Callbacks object with optional "onComplete" and/or "onChange" properties
-   * @param {Function} [callbacks.onComplete] Invoked on completion
-   * @param {Function} [callbacks.onChange] Invoked on every step of animation
-   * @return {fabric.Canvas} thisArg
-   * @chainable
-   */
-  fxCenterObjectH: function (object, callbacks) {
-    callbacks = callbacks || { };
-
-    var empty = function() { },
-        onComplete = callbacks.onComplete || empty,
-        onChange = callbacks.onChange || empty,
-        _this = this;
-
-    fabric.util.animate({
-      startValue: object.get('left'),
-      endValue: this.getCenter().left,
-      duration: this.FX_DURATION,
-      onChange: function(value) {
-        object.set('left', value);
-        _this.renderAll();
-        onChange();
-      },
-      onComplete: function() {
-        object.setCoords();
-        onComplete();
-      }
-    });
-
-    return this;
-  },
-
-  /**
-   * Centers object vertically with animation.
-   * @param {fabric.Object} object Object to center
-   * @param {Object} [callbacks] Callbacks object with optional "onComplete" and/or "onChange" properties
-   * @param {Function} [callbacks.onComplete] Invoked on completion
-   * @param {Function} [callbacks.onChange] Invoked on every step of animation
-   * @return {fabric.Canvas} thisArg
-   * @chainable
-   */
-  fxCenterObjectV: function (object, callbacks) {
-    callbacks = callbacks || { };
-
-    var empty = function() { },
-        onComplete = callbacks.onComplete || empty,
-        onChange = callbacks.onChange || empty,
-        _this = this;
-
-    fabric.util.animate({
-      startValue: object.get('top'),
-      endValue: this.getCenter().top,
-      duration: this.FX_DURATION,
-      onChange: function(value) {
-        object.set('top', value);
-        _this.renderAll();
-        onChange();
-      },
-      onComplete: function() {
-        object.setCoords();
-        onComplete();
-      }
-    });
-
-    return this;
-  },
-
-  /**
-   * Same as `fabric.Canvas#remove` but animated
-   * @param {fabric.Object} object Object to remove
-   * @param {Object} [callbacks] Callbacks object with optional "onComplete" and/or "onChange" properties
-   * @param {Function} [callbacks.onComplete] Invoked on completion
-   * @param {Function} [callbacks.onChange] Invoked on every step of animation
-   * @return {fabric.Canvas} thisArg
-   * @chainable
-   */
-  fxRemove: function (object, callbacks) {
-    callbacks = callbacks || { };
-
-    var empty = function() { },
-        onComplete = callbacks.onComplete || empty,
-        onChange = callbacks.onChange || empty,
-        _this = this;
-
-    fabric.util.animate({
-      startValue: object.get('opacity'),
-      endValue: 0,
-      duration: this.FX_DURATION,
-      onStart: function() {
-        object.set('active', false);
-      },
-      onChange: function(value) {
-        object.set('opacity', value);
-        _this.renderAll();
-        onChange();
-      },
-      onComplete: function () {
-        _this.remove(object);
-        onComplete();
-      }
-    });
-
-    return this;
-  }
-});
-
-fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prototype */ {
-  /**
-   * Animates object's properties
-   * @param {String|Object} property Property to animate (if string) or properties to animate (if object)
-   * @param {Number|Object} value Value to animate property to (if string was given first) or options object
-   * @return {fabric.Object} thisArg
-   * @tutorial {@link http://fabricjs.com/fabric-intro-part-2/#animation}
-   * @chainable
-   *
-   * As object — multiple properties
-   *
-   * object.animate({ left: ..., top: ... });
-   * object.animate({ left: ..., top: ... }, { duration: ... });
-   *
-   * As string — one property
-   *
-   * object.animate('left', ...);
-   * object.animate('left', { duration: ... });
-   *
-   */
-  animate: function() {
-    if (arguments[0] && typeof arguments[0] === 'object') {
-      var propsToAnimate = [ ], prop, skipCallbacks;
-      for (prop in arguments[0]) {
-        propsToAnimate.push(prop);
-      }
-      for (var i = 0, len = propsToAnimate.length; i < len; i++) {
-        prop = propsToAnimate[i];
-        skipCallbacks = i !== len - 1;
-        this._animate(prop, arguments[0][prop], arguments[1], skipCallbacks);
-      }
-    }
-    else {
-      this._animate.apply(this, arguments);
-    }
-    return this;
-  },
-
-  /**
-   * @private
-   * @param {String} property Property to animate
-   * @param {String} to Value to animate to
-   * @param {Object} [options] Options object
-   * @param {Boolean} [skipCallbacks] When true, callbacks like onchange and oncomplete are not invoked
-   */
-  _animate: function(property, to, options, skipCallbacks) {
-    var _this = this, propPair;
-
-    to = to.toString();
-
-    if (!options) {
-      options = { };
-    }
-    else {
-      options = fabric.util.object.clone(options);
-    }
-
-    if (~property.indexOf('.')) {
-      propPair = property.split('.');
-    }
-
-    var currentValue = propPair
-      ? this.get(propPair[0])[propPair[1]]
-      : this.get(property);
-
-    if (!('from' in options)) {
-      options.from = currentValue;
-    }
-
-    if (~to.indexOf('=')) {
-      to = currentValue + parseFloat(to.replace('=', ''));
-    }
-    else {
-      to = parseFloat(to);
-    }
-
-    fabric.util.animate({
-      startValue: options.from,
-      endValue: to,
-      byValue: options.by,
-      easing: options.easing,
-      duration: options.duration,
-      abort: options.abort && function() {
-        return options.abort.call(_this);
-      },
-      onChange: function(value) {
-        if (propPair) {
-          _this[propPair[0]][propPair[1]] = value;
-        }
-        else {
-          _this.set(property, value);
-        }
-        if (skipCallbacks) {
-          return;
-        }
-        options.onChange && options.onChange();
-      },
-      onComplete: function() {
-        if (skipCallbacks) {
-          return;
-        }
-
-        _this.setCoords();
-        options.onComplete && options.onComplete();
-      }
-    });
-  }
-});
-
-
 (function(global) {
 
   'use strict';
@@ -13803,8 +14915,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
   }
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -14051,8 +15161,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -14177,8 +15285,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -14390,8 +15496,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -14633,8 +15737,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -14819,8 +15921,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -15065,8 +16165,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -16032,8 +17130,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
   fabric.Path.async = true;
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -16305,8 +17401,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
   fabric.PathGroup.async = true;
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -16872,8 +17966,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
   fabric.Group.async = true;
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -17495,98 +18587,6 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
   fabric.Image.pngCompression = 1;
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
-fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prototype */ {
-
-  /**
-   * @private
-   * @return {Number} angle value
-   */
-  _getAngleValueForStraighten: function() {
-    var angle = this.getAngle() % 360;
-    if (angle > 0) {
-      return Math.round((angle - 1) / 90) * 90;
-    }
-    return Math.round(angle / 90) * 90;
-  },
-
-  /**
-   * Straightens an object (rotating it from current angle to one of 0, 90, 180, 270, etc. depending on which is closer)
-   * @return {fabric.Object} thisArg
-   * @chainable
-   */
-  straighten: function() {
-    this.setAngle(this._getAngleValueForStraighten());
-    return this;
-  },
-
-  /**
-   * Same as {@link fabric.Object.prototype.straighten} but with animation
-   * @param {Object} callbacks Object with callback functions
-   * @param {Function} [callbacks.onComplete] Invoked on completion
-   * @param {Function} [callbacks.onChange] Invoked on every step of animation
-   * @return {fabric.Object} thisArg
-   * @chainable
-   */
-  fxStraighten: function(callbacks) {
-    callbacks = callbacks || { };
-
-    var empty = function() { },
-        onComplete = callbacks.onComplete || empty,
-        onChange = callbacks.onChange || empty,
-        _this = this;
-
-    fabric.util.animate({
-      startValue: this.get('angle'),
-      endValue: this._getAngleValueForStraighten(),
-      duration: this.FX_DURATION,
-      onChange: function(value) {
-        _this.setAngle(value);
-        onChange();
-      },
-      onComplete: function() {
-        _this.setCoords();
-        onComplete();
-      },
-      onStart: function() {
-        _this.set('active', false);
-      }
-    });
-
-    return this;
-  }
-});
-
-fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.StaticCanvas.prototype */ {
-
-  /**
-   * Straightens object, then rerenders canvas
-   * @param {fabric.Object} object Object to straighten
-   * @return {fabric.Canvas} thisArg
-   * @chainable
-   */
-  straightenObject: function (object) {
-    object.straighten();
-    this.renderAll();
-    return this;
-  },
-
-  /**
-   * Same as {@link fabric.Canvas.prototype.straightenObject}, but animated
-   * @param {fabric.Object} object Object to straighten
-   * @return {fabric.Canvas} thisArg
-   * @chainable
-   */
-  fxStraightenObject: function (object) {
-    object.fxStraighten({
-      onChange: this.renderAll.bind(this)
-    });
-    return this;
-  }
-});
-
-
 /**
  * @namespace fabric.Image.filters
  * @memberOf fabric.Image
@@ -17646,8 +18646,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
     return this.toObject();
   }
 });
-
-
 (function(global) {
 
   'use strict';
@@ -17730,8 +18728,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -17905,8 +18901,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -17988,8 +18982,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -18051,8 +19043,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -18110,8 +19100,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -18217,8 +19205,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
   fabric.Image.filters.Mask.async = true;
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -18304,8 +19290,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -18416,8 +19400,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -18518,8 +19500,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -18578,8 +19558,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -18641,8 +19619,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -18755,8 +19731,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -18848,8 +19822,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
   'use strict';
 
@@ -18995,8 +19967,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
     return new fabric.Image.filters.Blend(object);
   };
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -19319,8 +20289,6 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
   };
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
 (function(global) {
 
   'use strict';
@@ -20384,3070 +21352,3 @@ fabric.Image.filters.BaseFilter = fabric.util.createClass(/** @lends fabric.Imag
   fabric.util.createAccessors(fabric.Text);
 
 })(typeof exports !== 'undefined' ? exports : this);
-
-
-(function() {
-
-  var clone = fabric.util.object.clone;
-
-  /**
-   * IText class (introduced in <b>v1.4</b>) Events are also fired with "text:"
-   * prefix when observing canvas.
-   * @class fabric.IText
-   * @extends fabric.Text
-   * @mixes fabric.Observable
-   *
-   * @fires changed
-   * @fires selection:changed
-   * @fires editing:entered
-   * @fires editing:exited
-   *
-   * @return {fabric.IText} thisArg
-   * @see {@link fabric.IText#initialize} for constructor definition
-   *
-   * <p>Supported key combinations:</p>
-   * <pre>
-   *   Move cursor:                    left, right, up, down
-   *   Select character:               shift + left, shift + right
-   *   Select text vertically:         shift + up, shift + down
-   *   Move cursor by word:            alt + left, alt + right
-   *   Select words:                   shift + alt + left, shift + alt + right
-   *   Move cursor to line start/end:  cmd + left, cmd + right or home, end
-   *   Select till start/end of line:  cmd + shift + left, cmd + shift + right or shift + home, shift + end
-   *   Jump to start/end of text:      cmd + up, cmd + down
-   *   Select till start/end of text:  cmd + shift + up, cmd + shift + down or shift + pgUp, shift + pgDown
-   *   Delete character:               backspace
-   *   Delete word:                    alt + backspace
-   *   Delete line:                    cmd + backspace
-   *   Forward delete:                 delete
-   *   Copy text:                      ctrl/cmd + c
-   *   Paste text:                     ctrl/cmd + v
-   *   Cut text:                       ctrl/cmd + x
-   *   Select entire text:             ctrl/cmd + a
-   *   Quit editing                    tab or esc
-   * </pre>
-   *
-   * <p>Supported mouse/touch combination</p>
-   * <pre>
-   *   Position cursor:                click/touch
-   *   Create selection:               click/touch & drag
-   *   Create selection:               click & shift + click
-   *   Select word:                    double click
-   *   Select line:                    triple click
-   * </pre>
-   */
-  fabric.IText = fabric.util.createClass(fabric.Text, fabric.Observable, /** @lends fabric.IText.prototype */ {
-
-    /**
-     * Type of an object
-     * @type String
-     * @default
-     */
-    type: 'i-text',
-
-    /**
-     * Index where text selection starts (or where cursor is when there is no selection)
-     * @type Nubmer
-     * @default
-     */
-    selectionStart: 0,
-
-    /**
-     * Index where text selection ends
-     * @type Nubmer
-     * @default
-     */
-    selectionEnd: 0,
-
-    /**
-     * Color of text selection
-     * @type String
-     * @default
-     */
-    selectionColor: 'rgba(17,119,255,0.3)',
-
-    /**
-     * Indicates whether text is in editing mode
-     * @type Boolean
-     * @default
-     */
-    isEditing: false,
-
-    /**
-     * Indicates whether a text can be edited
-     * @type Boolean
-     * @default
-     */
-    editable: true,
-
-    /**
-     * Border color of text object while it's in editing mode
-     * @type String
-     * @default
-     */
-    editingBorderColor: 'rgba(102,153,255,0.25)',
-
-    /**
-     * Width of cursor (in px)
-     * @type Number
-     * @default
-     */
-    cursorWidth: 2,
-
-    /**
-     * Color of default cursor (when not overwritten by character style)
-     * @type String
-     * @default
-     */
-    cursorColor: '#333',
-
-    /**
-     * Delay between cursor blink (in ms)
-     * @type Number
-     * @default
-     */
-    cursorDelay: 1000,
-
-    /**
-     * Duration of cursor fadein (in ms)
-     * @type Number
-     * @default
-     */
-    cursorDuration: 600,
-
-    /**
-     * Object containing character styles
-     * (where top-level properties corresponds to line number and 2nd-level properties -- to char number in a line)
-     * @type Object
-     * @default
-     */
-    styles: null,
-
-    /**
-     * Indicates whether internal text char widths can be cached
-     * @type Boolean
-     * @default
-     */
-    caching: true,
-
-    /**
-     * @private
-     * @type Boolean
-     * @default
-     */
-    _skipFillStrokeCheck: false,
-
-    /**
-     * @private
-     */
-    _reSpace: /\s|\n/,
-
-    /**
-     * @private
-     */
-    _currentCursorOpacity: 0,
-
-    /**
-     * @private
-     */
-    _selectionDirection: null,
-
-    /**
-     * @private
-     */
-    _abortCursorAnimation: false,
-
-    /**
-     * @private
-     */
-    _charWidthsCache: { },
-
-    /**
-     * Constructor
-     * @param {String} text Text string
-     * @param {Object} [options] Options object
-     * @return {fabric.IText} thisArg
-     */
-    initialize: function(text, options) {
-      this.styles = options ? (options.styles || { }) : { };
-      this.callSuper('initialize', text, options);
-      this.initBehavior();
-    },
-
-    /**
-     * @private
-     */
-    _clearCache: function() {
-      this.callSuper('_clearCache');
-      this.__maxFontHeights = [ ];
-      this.__widthOfSpace = [ ];
-    },
-
-    /**
-     * Returns true if object has no styling
-     */
-    isEmptyStyles: function() {
-      if (!this.styles) {
-        return true;
-      }
-      var obj = this.styles;
-
-      for (var p1 in obj) {
-        for (var p2 in obj[p1]) {
-          /*jshint unused:false */
-          for (var p3 in obj[p1][p2]) {
-            return false;
-          }
-        }
-      }
-      return true;
-    },
-
-    /**
-     * Sets selection start (left boundary of a selection)
-     * @param {Number} index Index to set selection start to
-     */
-    setSelectionStart: function(index) {
-      index = Math.max(index, 0);
-      if (this.selectionStart !== index) {
-        this.fire('selection:changed');
-        this.canvas && this.canvas.fire('text:selection:changed', { target: this });
-        this.selectionStart = index;
-      }
-      this._updateTextarea();
-    },
-
-    /**
-     * Sets selection end (right boundary of a selection)
-     * @param {Number} index Index to set selection end to
-     */
-    setSelectionEnd: function(index) {
-      index = Math.min(index, this.text.length);
-      if (this.selectionEnd !== index) {
-        this.fire('selection:changed');
-        this.canvas && this.canvas.fire('text:selection:changed', { target: this });
-        this.selectionEnd = index;
-      }
-      this._updateTextarea();
-    },
-
-    /**
-     * Gets style of a current selection/cursor (at the start position)
-     * @param {Number} [startIndex] Start index to get styles at
-     * @param {Number} [endIndex] End index to get styles at
-     * @return {Object} styles Style object at a specified (or current) index
-     */
-    getSelectionStyles: function(startIndex, endIndex) {
-
-      if (arguments.length === 2) {
-        var styles = [ ];
-        for (var i = startIndex; i < endIndex; i++) {
-          styles.push(this.getSelectionStyles(i));
-        }
-        return styles;
-      }
-
-      var loc = this.get2DCursorLocation(startIndex);
-      if (this.styles[loc.lineIndex]) {
-        return this.styles[loc.lineIndex][loc.charIndex] || { };
-      }
-
-      return { };
-    },
-
-    /**
-     * Sets style of a current selection
-     * @param {Object} [styles] Styles object
-     * @return {fabric.IText} thisArg
-     * @chainable
-     */
-    setSelectionStyles: function(styles) {
-      if (this.selectionStart === this.selectionEnd) {
-        this._extendStyles(this.selectionStart, styles);
-      }
-      else {
-        for (var i = this.selectionStart; i < this.selectionEnd; i++) {
-          this._extendStyles(i, styles);
-        }
-      }
-      /* not included in _extendStyles to avoid clearing cache more than once */
-      this._clearCache();
-      return this;
-    },
-
-    /**
-     * @private
-     */
-    _extendStyles: function(index, styles) {
-      var loc = this.get2DCursorLocation(index);
-
-      if (!this.styles[loc.lineIndex]) {
-        this.styles[loc.lineIndex] = { };
-      }
-      if (!this.styles[loc.lineIndex][loc.charIndex]) {
-        this.styles[loc.lineIndex][loc.charIndex] = { };
-      }
-      fabric.util.object.extend(this.styles[loc.lineIndex][loc.charIndex], styles);
-    },
-
-    /**
-    * @private
-    * @param {CanvasRenderingContext2D} ctx Context to render on
-    */
-    _render: function(ctx) {
-      this.callSuper('_render', ctx);
-      this.ctx = ctx;
-      this.isEditing && this.renderCursorOrSelection();
-    },
-
-    /**
-     * Renders cursor or selection (depending on what exists)
-     */
-    renderCursorOrSelection: function() {
-      if (!this.active) {
-        return;
-      }
-
-      var chars = this.text.split(''),
-          boundaries, ctx;
-
-      if (this.canvas.contextTop) {
-        ctx = this.canvas.contextTop;
-        ctx.save();
-        ctx.transform.apply(ctx, this.canvas.viewportTransform);
-        this.transform(ctx);
-      }
-      else {
-        ctx = this.ctx;
-        ctx.save();
-      }
-
-      if (this.selectionStart === this.selectionEnd) {
-        boundaries = this._getCursorBoundaries(chars, 'cursor');
-        this.renderCursor(boundaries, ctx);
-      }
-      else {
-        boundaries = this._getCursorBoundaries(chars, 'selection');
-        this.renderSelection(chars, boundaries, ctx);
-      }
-
-      ctx.restore();
-    },
-
-    /**
-     * Returns 2d representation (lineIndex and charIndex) of cursor (or selection start)
-     * @param {Number} [selectionStart] Optional index. When not given, current selectionStart is used.
-     */
-    get2DCursorLocation: function(selectionStart) {
-      if (typeof selectionStart === 'undefined') {
-        selectionStart = this.selectionStart;
-      }
-      var textBeforeCursor = this.text.slice(0, selectionStart),
-          linesBeforeCursor = textBeforeCursor.split(this._reNewline);
-
-      return {
-        lineIndex: linesBeforeCursor.length - 1,
-        charIndex: linesBeforeCursor[linesBeforeCursor.length - 1].length
-      };
-    },
-
-    /**
-     * Returns complete style of char at the current cursor
-     * @param {Number} lineIndex Line index
-     * @param {Number} charIndex Char index
-    * @return {Object} Character style
-     */
-    getCurrentCharStyle: function(lineIndex, charIndex) {
-      var style = this.styles[lineIndex] && this.styles[lineIndex][charIndex === 0 ? 0 : (charIndex - 1)];
-
-      return {
-        fontSize: style && style.fontSize || this.fontSize,
-        fill: style && style.fill || this.fill,
-        textBackgroundColor: style && style.textBackgroundColor || this.textBackgroundColor,
-        textDecoration: style && style.textDecoration || this.textDecoration,
-        fontFamily: style && style.fontFamily || this.fontFamily,
-        fontWeight: style && style.fontWeight || this.fontWeight,
-        fontStyle: style && style.fontStyle || this.fontStyle,
-        stroke: style && style.stroke || this.stroke,
-        strokeWidth: style && style.strokeWidth || this.strokeWidth
-      };
-    },
-
-    /**
-     * Returns fontSize of char at the current cursor
-     * @param {Number} lineIndex Line index
-     * @param {Number} charIndex Char index
-     * @return {Number} Character font size
-     */
-    getCurrentCharFontSize: function(lineIndex, charIndex) {
-      return (
-        this.styles[lineIndex] &&
-        this.styles[lineIndex][charIndex === 0 ? 0 : (charIndex - 1)] &&
-        this.styles[lineIndex][charIndex === 0 ? 0 : (charIndex - 1)].fontSize) || this.fontSize;
-    },
-
-    /**
-     * Returns color (fill) of char at the current cursor
-     * @param {Number} lineIndex Line index
-     * @param {Number} charIndex Char index
-     * @return {String} Character color (fill)
-     */
-    getCurrentCharColor: function(lineIndex, charIndex) {
-      return (
-        this.styles[lineIndex] &&
-        this.styles[lineIndex][charIndex === 0 ? 0 : (charIndex - 1)] &&
-        this.styles[lineIndex][charIndex === 0 ? 0 : (charIndex - 1)].fill) || this.cursorColor;
-    },
-
-    /**
-     * Returns cursor boundaries (left, top, leftOffset, topOffset)
-     * @private
-     * @param {Array} chars Array of characters
-     * @param {String} typeOfBoundaries
-     */
-    _getCursorBoundaries: function(chars, typeOfBoundaries) {
-
-      // left/top are left/top of entire text box
-      // leftOffset/topOffset are offset from that left/top point of a text box
-
-      var left = Math.round(this._getLeftOffset()),
-          top = this._getTopOffset(),
-
-          offsets = this._getCursorBoundariesOffsets(
-                      chars, typeOfBoundaries);
-
-      return {
-        left: left,
-        top: top,
-        leftOffset: offsets.left + offsets.lineLeft,
-        topOffset: offsets.top
-      };
-    },
-
-    /**
-     * @private
-     */
-    _getCursorBoundariesOffsets: function(chars, typeOfBoundaries) {
-
-      var lineLeftOffset = 0,
-
-          lineIndex = 0,
-          charIndex = 0,
-          topOffset = 0,
-          leftOffset = 0;
-
-      for (var i = 0; i < this.selectionStart; i++) {
-        if (chars[i] === '\n') {
-          leftOffset = 0;
-          topOffset += this._getHeightOfLine(this.ctx, lineIndex);
-
-          lineIndex++;
-          charIndex = 0;
-        }
-        else {
-          leftOffset += this._getWidthOfChar(this.ctx, chars[i], lineIndex, charIndex);
-          charIndex++;
-        }
-
-        lineLeftOffset = this._getCachedLineOffset(lineIndex);
-      }
-      if (typeOfBoundaries === 'cursor') {
-        topOffset += (1 - this._fontSizeFraction) * this._getHeightOfLine(this.ctx, lineIndex) / this.lineHeight
-          - this.getCurrentCharFontSize(lineIndex, charIndex) * (1 - this._fontSizeFraction);
-      }
-
-      return {
-        top: topOffset,
-        left: leftOffset,
-        lineLeft: lineLeftOffset
-      };
-    },
-
-    /**
-     * @private
-     */
-    _getCachedLineOffset: function(lineIndex) {
-      var widthOfLine = this._getLineWidth(this.ctx, lineIndex);
-
-      return this.__lineOffsets[lineIndex] ||
-        (this.__lineOffsets[lineIndex] = this._getLineLeftOffset(widthOfLine));
-    },
-
-    /**
-     * Renders cursor
-     * @param {Object} boundaries
-     * @param {CanvasRenderingContext2D} ctx transformed context to draw on
-     */
-    renderCursor: function(boundaries, ctx) {
-
-      var cursorLocation = this.get2DCursorLocation(),
-          lineIndex = cursorLocation.lineIndex,
-          charIndex = cursorLocation.charIndex,
-          charHeight = this.getCurrentCharFontSize(lineIndex, charIndex),
-          leftOffset = (lineIndex === 0 && charIndex === 0)
-                    ? this._getCachedLineOffset(lineIndex)
-                    : boundaries.leftOffset;
-
-      ctx.fillStyle = this.getCurrentCharColor(lineIndex, charIndex);
-      ctx.globalAlpha = this.__isMousedown ? 1 : this._currentCursorOpacity;
-
-      ctx.fillRect(
-        boundaries.left + leftOffset,
-        boundaries.top + boundaries.topOffset,
-        this.cursorWidth / this.scaleX,
-        charHeight);
-
-    },
-
-    /**
-     * Renders text selection
-     * @param {Array} chars Array of characters
-     * @param {Object} boundaries Object with left/top/leftOffset/topOffset
-     * @param {CanvasRenderingContext2D} ctx transformed context to draw on
-     */
-    renderSelection: function(chars, boundaries, ctx) {
-
-      ctx.fillStyle = this.selectionColor;
-
-      var start = this.get2DCursorLocation(this.selectionStart),
-          end = this.get2DCursorLocation(this.selectionEnd),
-          startLine = start.lineIndex,
-          endLine = end.lineIndex;
-
-      for (var i = startLine; i <= endLine; i++) {
-        var lineOffset = this._getCachedLineOffset(i) || 0,
-            lineHeight = this._getHeightOfLine(this.ctx, i),
-            boxWidth = 0, line = this._textLines[i];
-
-        if (i === startLine) {
-          for (var j = 0, len = line.length; j < len; j++) {
-            if (j >= start.charIndex && (i !== endLine || j < end.charIndex)) {
-              boxWidth += this._getWidthOfChar(ctx, line[j], i, j);
-            }
-            if (j < start.charIndex) {
-              lineOffset += this._getWidthOfChar(ctx, line[j], i, j);
-            }
-          }
-        }
-        else if (i > startLine && i < endLine) {
-          boxWidth += this._getLineWidth(ctx, i) || 5;
-        }
-        else if (i === endLine) {
-          for (var j2 = 0, j2len = end.charIndex; j2 < j2len; j2++) {
-            boxWidth += this._getWidthOfChar(ctx, line[j2], i, j2);
-          }
-        }
-
-        ctx.fillRect(
-          boundaries.left + lineOffset,
-          boundaries.top + boundaries.topOffset,
-          boxWidth,
-          lineHeight);
-
-        boundaries.topOffset += lineHeight;
-      }
-    },
-
-    /**
-     * @private
-     * @param {String} method
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     */
-    _renderChars: function(method, ctx, line, left, top, lineIndex) {
-
-      if (this.isEmptyStyles()) {
-        return this._renderCharsFast(method, ctx, line, left, top);
-      }
-
-      this.skipTextAlign = true;
-
-      // set proper box offset
-      left -= this.textAlign === 'center'
-        ? (this.width / 2)
-        : (this.textAlign === 'right')
-          ? this.width
-          : 0;
-
-      // set proper line offset
-      var lineHeight = this._getHeightOfLine(ctx, lineIndex),
-          lineLeftOffset = this._getCachedLineOffset(lineIndex),
-          chars = line.split(''),
-          prevStyle,
-          charsToRender = '';
-
-      left += lineLeftOffset || 0;
-
-      ctx.save();
-      top -= lineHeight / this.lineHeight * this._fontSizeFraction;
-      for (var i = 0, len = chars.length; i <= len; i++) {
-        prevStyle = prevStyle || this.getCurrentCharStyle(lineIndex, i);
-        var thisStyle = this.getCurrentCharStyle(lineIndex, i + 1);
-
-        if (this._hasStyleChanged(prevStyle, thisStyle) || i === len) {
-          this._renderChar(method, ctx, lineIndex, i - 1, charsToRender, left, top, lineHeight);
-          charsToRender = '';
-          prevStyle = thisStyle;
-        }
-        charsToRender += chars[i];
-      }
-
-      ctx.restore();
-    },
-
-    /**
-     * @private
-     * @param {String} method
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     * @param {String} line Content of the line
-     * @param {Number} left Left coordinate
-     * @param {Number} top Top coordinate
-     */
-    _renderCharsFast: function(method, ctx, line, left, top) {
-      this.skipTextAlign = false;
-
-      if (method === 'fillText' && this.fill) {
-        this.callSuper('_renderChars', method, ctx, line, left, top);
-      }
-      if (method === 'strokeText' && ((this.stroke && this.strokeWidth > 0) || this.skipFillStrokeCheck)) {
-        this.callSuper('_renderChars', method, ctx, line, left, top);
-      }
-    },
-
-    /**
-     * @private
-     * @param {String} method
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     * @param {Number} lineIndex
-     * @param {Number} i
-     * @param {String} _char
-     * @param {Number} left Left coordinate
-     * @param {Number} top Top coordinate
-     * @param {Number} lineHeight Height of the line
-     */
-    _renderChar: function(method, ctx, lineIndex, i, _char, left, top, lineHeight) {
-      var decl, charWidth, charHeight,
-          offset = this._fontSizeFraction * lineHeight / this.lineHeight;
-
-      if (this.styles && this.styles[lineIndex] && (decl = this.styles[lineIndex][i])) {
-
-        var shouldStroke = decl.stroke || this.stroke,
-            shouldFill = decl.fill || this.fill;
-
-        ctx.save();
-        charWidth = this._applyCharStylesGetWidth(ctx, _char, lineIndex, i, decl);
-        charHeight = this._getHeightOfChar(ctx, _char, lineIndex, i);
-
-        if (shouldFill) {
-          ctx.fillText(_char, left, top);
-        }
-        if (shouldStroke) {
-          ctx.strokeText(_char, left, top);
-        }
-
-        this._renderCharDecoration(ctx, decl, left, top, offset, charWidth, charHeight);
-        ctx.restore();
-
-        ctx.translate(charWidth, 0);
-      }
-      else {
-        if (method === 'strokeText' && this.stroke) {
-          ctx[method](_char, left, top);
-        }
-        if (method === 'fillText' && this.fill) {
-          ctx[method](_char, left, top);
-        }
-        charWidth = this._applyCharStylesGetWidth(ctx, _char, lineIndex, i);
-        this._renderCharDecoration(ctx, null, left, top, offset, charWidth, this.fontSize);
-
-        ctx.translate(ctx.measureText(_char).width, 0);
-      }
-    },
-
-    /**
-     * @private
-     * @param {Object} prevStyle
-     * @param {Object} thisStyle
-     */
-    _hasStyleChanged: function(prevStyle, thisStyle) {
-      return (prevStyle.fill !== thisStyle.fill ||
-              prevStyle.fontSize !== thisStyle.fontSize ||
-              prevStyle.textBackgroundColor !== thisStyle.textBackgroundColor ||
-              prevStyle.textDecoration !== thisStyle.textDecoration ||
-              prevStyle.fontFamily !== thisStyle.fontFamily ||
-              prevStyle.fontWeight !== thisStyle.fontWeight ||
-              prevStyle.fontStyle !== thisStyle.fontStyle ||
-              prevStyle.stroke !== thisStyle.stroke ||
-              prevStyle.strokeWidth !== thisStyle.strokeWidth
-      );
-    },
-
-    /**
-     * @private
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     */
-    _renderCharDecoration: function(ctx, styleDeclaration, left, top, offset, charWidth, charHeight) {
-
-      var textDecoration = styleDeclaration
-            ? (styleDeclaration.textDecoration || this.textDecoration)
-            : this.textDecoration;
-
-      if (!textDecoration) {
-        return;
-      }
-
-      if (textDecoration.indexOf('underline') > -1) {
-        ctx.fillRect(
-          left,
-          top + charHeight / 10,
-          charWidth ,
-          charHeight / 15
-        );
-      }
-      if (textDecoration.indexOf('line-through') > -1) {
-        ctx.fillRect(
-          left,
-          top - charHeight * (this._fontSizeFraction + this._fontSizeMult - 1) + charHeight / 15,
-          charWidth,
-          charHeight / 15
-        );
-      }
-      if (textDecoration.indexOf('overline') > -1) {
-        ctx.fillRect(
-          left,
-          top - (this._fontSizeMult - this._fontSizeFraction) * charHeight,
-          charWidth,
-          charHeight / 15
-        );
-      }
-    },
-
-    /**
-     * @private
-     * @param {String} method
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     * @param {String} line
-     */
-    _renderTextLine: function(method, ctx, line, left, top, lineIndex) {
-      // to "cancel" this.fontSize subtraction in fabric.Text#_renderTextLine
-      // the adding 0.03 is just to align text with itext by overlap test
-      if (!this.isEmptyStyles()) {
-        top += this.fontSize * (this._fontSizeFraction + 0.03);
-      }
-      this.callSuper('_renderTextLine', method, ctx, line, left, top, lineIndex);
-    },
-
-    /**
-     * @private
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     */
-    _renderTextDecoration: function(ctx) {
-      if (this.isEmptyStyles()) {
-        return this.callSuper('_renderTextDecoration', ctx);
-      }
-    },
-
-    /**
-     * @private
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     */
-    _renderTextLinesBackground: function(ctx) {
-      if (!this.textBackgroundColor && !this.styles) {
-        return;
-      }
-
-      ctx.save();
-
-      if (this.textBackgroundColor) {
-        ctx.fillStyle = this.textBackgroundColor;
-      }
-
-      var lineHeights = 0;
-
-      for (var i = 0, len = this._textLines.length; i < len; i++) {
-
-        var heightOfLine = this._getHeightOfLine(ctx, i);
-        if (this._textLines[i] === '') {
-          lineHeights += heightOfLine;
-          continue;
-        }
-
-        var lineWidth = this._getLineWidth(ctx, i),
-            lineLeftOffset = this._getCachedLineOffset(i);
-
-        if (this.textBackgroundColor) {
-          ctx.fillStyle = this.textBackgroundColor;
-
-          ctx.fillRect(
-            this._getLeftOffset() + lineLeftOffset,
-            this._getTopOffset() + lineHeights,
-            lineWidth,
-            heightOfLine / this.lineHeight
-          );
-        }
-        if (this.styles[i]) {
-          for (var j = 0, jlen = this._textLines[i].length; j < jlen; j++) {
-            if (this.styles[i] && this.styles[i][j] && this.styles[i][j].textBackgroundColor) {
-
-              var _char = this._textLines[i][j];
-
-              ctx.fillStyle = this.styles[i][j].textBackgroundColor;
-
-              ctx.fillRect(
-                this._getLeftOffset() + lineLeftOffset + this._getWidthOfCharsAt(ctx, i, j),
-                this._getTopOffset() + lineHeights,
-                this._getWidthOfChar(ctx, _char, i, j) + 1,
-                heightOfLine / this.lineHeight
-              );
-            }
-          }
-        }
-        lineHeights += heightOfLine;
-      }
-      ctx.restore();
-    },
-
-    /**
-     * @private
-     */
-    _getCacheProp: function(_char, styleDeclaration) {
-      return _char +
-             styleDeclaration.fontFamily +
-             styleDeclaration.fontSize +
-             styleDeclaration.fontWeight +
-             styleDeclaration.fontStyle +
-             styleDeclaration.shadow;
-    },
-
-    /**
-     * @private
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     * @param {String} _char
-     * @param {Number} lineIndex
-     * @param {Number} charIndex
-     * @param {Object} [decl]
-     */
-    _applyCharStylesGetWidth: function(ctx, _char, lineIndex, charIndex, decl) {
-      var styleDeclaration = decl ||
-                            (this.styles[lineIndex] &&
-                             this.styles[lineIndex][charIndex]);
-
-      if (styleDeclaration) {
-        // cloning so that original style object is not polluted with following font declarations
-        styleDeclaration = clone(styleDeclaration);
-      }
-      else {
-        styleDeclaration = { };
-      }
-
-      this._applyFontStyles(styleDeclaration);
-
-      var cacheProp = this._getCacheProp(_char, styleDeclaration);
-
-      // short-circuit if no styles
-      if (this.isEmptyStyles() && this._charWidthsCache[cacheProp] && this.caching) {
-        return this._charWidthsCache[cacheProp];
-      }
-
-      if (typeof styleDeclaration.shadow === 'string') {
-        styleDeclaration.shadow = new fabric.Shadow(styleDeclaration.shadow);
-      }
-
-      var fill = styleDeclaration.fill || this.fill;
-      ctx.fillStyle = fill.toLive
-        ? fill.toLive(ctx, this)
-        : fill;
-
-      if (styleDeclaration.stroke) {
-        ctx.strokeStyle = (styleDeclaration.stroke && styleDeclaration.stroke.toLive)
-          ? styleDeclaration.stroke.toLive(ctx, this)
-          : styleDeclaration.stroke;
-      }
-
-      ctx.lineWidth = styleDeclaration.strokeWidth || this.strokeWidth;
-      ctx.font = this._getFontDeclaration.call(styleDeclaration);
-      this._setShadow.call(styleDeclaration, ctx);
-
-      if (!this.caching) {
-        return ctx.measureText(_char).width;
-      }
-
-      if (!this._charWidthsCache[cacheProp]) {
-        this._charWidthsCache[cacheProp] = ctx.measureText(_char).width;
-      }
-
-      return this._charWidthsCache[cacheProp];
-    },
-
-    /**
-     * @private
-     * @param {Object} styleDeclaration
-     */
-    _applyFontStyles: function(styleDeclaration) {
-      if (!styleDeclaration.fontFamily) {
-        styleDeclaration.fontFamily = this.fontFamily;
-      }
-      if (!styleDeclaration.fontSize) {
-        styleDeclaration.fontSize = this.fontSize;
-      }
-      if (!styleDeclaration.fontWeight) {
-        styleDeclaration.fontWeight = this.fontWeight;
-      }
-      if (!styleDeclaration.fontStyle) {
-        styleDeclaration.fontStyle = this.fontStyle;
-      }
-    },
-
-    /**
-     * @private
-     * @param {Number} lineIndex
-     * @param {Number} charIndex
-     */
-    _getStyleDeclaration: function(lineIndex, charIndex) {
-      return (this.styles[lineIndex] && this.styles[lineIndex][charIndex])
-        ? clone(this.styles[lineIndex][charIndex])
-        : { };
-    },
-
-    /**
-     * @private
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     */
-    _getWidthOfChar: function(ctx, _char, lineIndex, charIndex) {
-      if (this.textAlign === 'justify' && /\s/.test(_char)) {
-        return this._getWidthOfSpace(ctx, lineIndex);
-      }
-
-      var styleDeclaration = this._getStyleDeclaration(lineIndex, charIndex);
-      this._applyFontStyles(styleDeclaration);
-      var cacheProp = this._getCacheProp(_char, styleDeclaration);
-
-      if (this._charWidthsCache[cacheProp] && this.caching) {
-        return this._charWidthsCache[cacheProp];
-      }
-      else if (ctx) {
-        ctx.save();
-        var width = this._applyCharStylesGetWidth(ctx, _char, lineIndex, charIndex);
-        ctx.restore();
-        return width;
-      }
-    },
-
-    /**
-     * @private
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     */
-    _getHeightOfChar: function(ctx, _char, lineIndex, charIndex) {
-      if (this.styles[lineIndex] && this.styles[lineIndex][charIndex]) {
-        return this.styles[lineIndex][charIndex].fontSize || this.fontSize;
-      }
-      return this.fontSize;
-    },
-
-    /**
-     * @private
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     */
-    _getHeightOfCharAt: function(ctx, lineIndex, charIndex) {
-      var _char = this._textLines[lineIndex][charIndex];
-      return this._getHeightOfChar(ctx, _char, lineIndex, charIndex);
-    },
-
-    /**
-     * @private
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     */
-    _getWidthOfCharsAt: function(ctx, lineIndex, charIndex) {
-      var width = 0, i, _char;
-      for (i = 0; i < charIndex; i++) {
-        _char = this._textLines[lineIndex][i];
-        width += this._getWidthOfChar(ctx, _char, lineIndex, i);
-      }
-      return width;
-    },
-
-    /**
-     * @private
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     */
-    _getLineWidth: function(ctx, lineIndex) {
-      if (this.__lineWidths[lineIndex]) {
-        return this.__lineWidths[lineIndex];
-      }
-      this.__lineWidths[lineIndex] = this._getWidthOfCharsAt(ctx, lineIndex, this._textLines[lineIndex].length);
-      return this.__lineWidths[lineIndex];
-    },
-
-    /**
-     * @private
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     * @param {Number} lineIndex
-     */
-    _getWidthOfSpace: function (ctx, lineIndex) {
-      if (this.__widthOfSpace[lineIndex]) {
-        return this.__widthOfSpace[lineIndex];
-      }
-      var line = this._textLines[lineIndex],
-          wordsWidth = this._getWidthOfWords(ctx, line, lineIndex),
-          widthDiff = this.width - wordsWidth,
-          numSpaces = line.length - line.replace(/\s+/g, '').length,
-          width = widthDiff / numSpaces;
-      this.__widthOfSpace[lineIndex] = width;
-      return width;
-    },
-
-    /**
-     * @private
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     * @param {Number} line
-     * @param {Number} lineIndex
-     */
-    _getWidthOfWords: function (ctx, line, lineIndex) {
-      var width = 0;
-
-      for (var charIndex = 0; charIndex < line.length; charIndex++) {
-        var _char = line[charIndex];
-
-        if (!_char.match(/\s/)) {
-          width += this._getWidthOfChar(ctx, _char, lineIndex, charIndex);
-        }
-      }
-
-      return width;
-    },
-
-    /**
-     * @private
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     */
-    _getHeightOfLine: function(ctx, lineIndex) {
-      if (this.__lineHeights[lineIndex]) {
-        return this.__lineHeights[lineIndex];
-      }
-
-      var line = this._textLines[lineIndex],
-          maxHeight = this._getHeightOfChar(ctx, line[0], lineIndex, 0);
-
-      for (var i = 1, len = line.length; i < len; i++) {
-        var currentCharHeight = this._getHeightOfChar(ctx, line[i], lineIndex, i);
-        if (currentCharHeight > maxHeight) {
-          maxHeight = currentCharHeight;
-        }
-      }
-      this.__maxFontHeights[lineIndex] = maxHeight;
-      this.__lineHeights[lineIndex] = maxHeight * this.lineHeight * this._fontSizeMult;
-      return this.__lineHeights[lineIndex];
-    },
-
-    /**
-     * @private
-     * @param {CanvasRenderingContext2D} ctx Context to render on
-     */
-    _getTextHeight: function(ctx) {
-      var height = 0;
-      for (var i = 0, len = this._textLines.length; i < len; i++) {
-        height += this._getHeightOfLine(ctx, i);
-      }
-      return height;
-    },
-
-    /**
-     * This method is overwritten to account for different top offset
-     * @private
-     */
-    _renderTextBoxBackground: function(ctx) {
-      if (!this.backgroundColor) {
-        return;
-      }
-
-      ctx.save();
-      ctx.fillStyle = this.backgroundColor;
-
-      ctx.fillRect(
-        this._getLeftOffset(),
-        this._getTopOffset(),
-        this.width,
-        this.height
-      );
-
-      ctx.restore();
-    },
-
-    /**
-     * Returns object representation of an instance
-     * @method toObject
-     * @param {Array} [propertiesToInclude] Any properties that you might want to additionally include in the output
-     * @return {Object} object representation of an instance
-     */
-    toObject: function(propertiesToInclude) {
-      return fabric.util.object.extend(this.callSuper('toObject', propertiesToInclude), {
-        styles: clone(this.styles)
-      });
-    }
-  });
-
-  /**
-   * Returns fabric.IText instance from an object representation
-   * @static
-   * @memberOf fabric.IText
-   * @param {Object} object Object to create an instance from
-   * @return {fabric.IText} instance of fabric.IText
-   */
-  fabric.IText.fromObject = function(object) {
-    return new fabric.IText(object.text, clone(object));
-  };
-})();
-
-
-(function() {
-
-  var clone = fabric.util.object.clone;
-
-  fabric.util.object.extend(fabric.IText.prototype, /** @lends fabric.IText.prototype */ {
-
-    /**
-     * Initializes all the interactive behavior of IText
-     */
-    initBehavior: function() {
-      this.initAddedHandler();
-      this.initRemovedHandler();
-      this.initCursorSelectionHandlers();
-      this.initDoubleClickSimulation();
-    },
-
-    /**
-     * Initializes "selected" event handler
-     */
-    initSelectedHandler: function() {
-      this.on('selected', function() {
-
-        var _this = this;
-        setTimeout(function() {
-          _this.selected = true;
-        }, 100);
-      });
-    },
-
-    /**
-     * Initializes "added" event handler
-     */
-    initAddedHandler: function() {
-      var _this = this;
-      this.on('added', function() {
-        if (this.canvas && !this.canvas._hasITextHandlers) {
-          this.canvas._hasITextHandlers = true;
-          this._initCanvasHandlers();
-        }
-
-        // Track IText instances per-canvas. Only register in this array once added
-        // to a canvas; we don't want to leak a reference to the instance forever
-        // simply because it existed at some point.
-        //
-        // (Might be added to a collection, but not on a canvas.)
-        if (_this.canvas) {
-          _this.canvas._iTextInstances = _this.canvas._iTextInstances || [];
-          _this.canvas._iTextInstances.push(_this);
-        }
-      });
-    },
-
-    initRemovedHandler: function() {
-      var _this = this;
-      this.on('removed', function() {
-        // (Might be removed from a collection, but not on a canvas.)
-        if (_this.canvas) {
-          _this.canvas._iTextInstances = _this.canvas._iTextInstances || [];
-          fabric.util.removeFromArray(_this.canvas._iTextInstances, _this);
-        }
-      });
-    },
-
-    /**
-     * @private
-     */
-    _initCanvasHandlers: function() {
-      var _this = this;
-
-      this.canvas.on('selection:cleared', function() {
-        fabric.IText.prototype.exitEditingOnOthers(_this.canvas);
-      });
-
-      this.canvas.on('mouse:up', function() {
-        if (_this.canvas._iTextInstances) {
-          _this.canvas._iTextInstances.forEach(function(obj) {
-            obj.__isMousedown = false;
-          });
-        }
-      });
-
-      this.canvas.on('object:selected', function() {
-        fabric.IText.prototype.exitEditingOnOthers(_this.canvas);
-      });
-    },
-
-    /**
-     * @private
-     */
-    _tick: function() {
-      this._currentTickState = this._animateCursor(this, 1, this.cursorDuration, '_onTickComplete');
-    },
-
-    /**
-     * @private
-     */
-    _animateCursor: function(obj, targetOpacity, duration, completeMethod) {
-
-      var tickState;
-
-      tickState = {
-        isAborted: false,
-        abort: function() {
-          this.isAborted = true;
-        },
-      };
-
-      obj.animate('_currentCursorOpacity', targetOpacity, {
-        duration: duration,
-        onComplete: function() {
-          if (!tickState.isAborted) {
-            obj[completeMethod]();
-          }
-        },
-        onChange: function() {
-          if (obj.canvas) {
-            obj.canvas.clearContext(obj.canvas.contextTop || obj.ctx);
-            obj.renderCursorOrSelection();
-          }
-        },
-        abort: function() {
-          return tickState.isAborted;
-        }
-      });
-      return tickState;
-    },
-
-    /**
-     * @private
-     */
-    _onTickComplete: function() {
-
-      var _this = this;
-
-      if (this._cursorTimeout1) {
-        clearTimeout(this._cursorTimeout1);
-      }
-      this._cursorTimeout1 = setTimeout(function() {
-        _this._currentTickCompleteState = _this._animateCursor(_this, 0, this.cursorDuration / 2, '_tick');
-      }, 100);
-    },
-
-    /**
-     * Initializes delayed cursor
-     */
-    initDelayedCursor: function(restart) {
-      var _this = this,
-          delay = restart ? 0 : this.cursorDelay;
-
-      this._currentTickState && this._currentTickState.abort();
-      this._currentTickCompleteState && this._currentTickCompleteState.abort();
-      clearTimeout(this._cursorTimeout1);
-      this._currentCursorOpacity = 1;
-      if (this.canvas) {
-        this.canvas.clearContext(this.canvas.contextTop || this.ctx);
-        this.renderCursorOrSelection();
-      }
-      if (this._cursorTimeout2) {
-        clearTimeout(this._cursorTimeout2);
-      }
-      this._cursorTimeout2 = setTimeout(function() {
-        _this._tick();
-      }, delay);
-    },
-
-    /**
-     * Aborts cursor animation and clears all timeouts
-     */
-    abortCursorAnimation: function() {
-      this._currentTickState && this._currentTickState.abort();
-      this._currentTickCompleteState && this._currentTickCompleteState.abort();
-
-      clearTimeout(this._cursorTimeout1);
-      clearTimeout(this._cursorTimeout2);
-
-      this._currentCursorOpacity = 0;
-      this.canvas && this.canvas.clearContext(this.canvas.contextTop || this.ctx);
-    },
-
-    /**
-     * Selects entire text
-     */
-    selectAll: function() {
-      this.setSelectionStart(0);
-      this.setSelectionEnd(this.text.length);
-    },
-
-    /**
-     * Returns selected text
-     * @return {String}
-     */
-    getSelectedText: function() {
-      return this.text.slice(this.selectionStart, this.selectionEnd);
-    },
-
-    /**
-     * Find new selection index representing start of current word according to current selection index
-     * @param {Number} startFrom Surrent selection index
-     * @return {Number} New selection index
-     */
-    findWordBoundaryLeft: function(startFrom) {
-      var offset = 0, index = startFrom - 1;
-
-      // remove space before cursor first
-      if (this._reSpace.test(this.text.charAt(index))) {
-        while (this._reSpace.test(this.text.charAt(index))) {
-          offset++;
-          index--;
-        }
-      }
-      while (/\S/.test(this.text.charAt(index)) && index > -1) {
-        offset++;
-        index--;
-      }
-
-      return startFrom - offset;
-    },
-
-    /**
-     * Find new selection index representing end of current word according to current selection index
-     * @param {Number} startFrom Current selection index
-     * @return {Number} New selection index
-     */
-    findWordBoundaryRight: function(startFrom) {
-      var offset = 0, index = startFrom;
-
-      // remove space after cursor first
-      if (this._reSpace.test(this.text.charAt(index))) {
-        while (this._reSpace.test(this.text.charAt(index))) {
-          offset++;
-          index++;
-        }
-      }
-      while (/\S/.test(this.text.charAt(index)) && index < this.text.length) {
-        offset++;
-        index++;
-      }
-
-      return startFrom + offset;
-    },
-
-    /**
-     * Find new selection index representing start of current line according to current selection index
-     * @param {Number} startFrom Current selection index
-     * @return {Number} New selection index
-     */
-    findLineBoundaryLeft: function(startFrom) {
-      var offset = 0, index = startFrom - 1;
-
-      while (!/\n/.test(this.text.charAt(index)) && index > -1) {
-        offset++;
-        index--;
-      }
-
-      return startFrom - offset;
-    },
-
-    /**
-     * Find new selection index representing end of current line according to current selection index
-     * @param {Number} startFrom Current selection index
-     * @return {Number} New selection index
-     */
-    findLineBoundaryRight: function(startFrom) {
-      var offset = 0, index = startFrom;
-
-      while (!/\n/.test(this.text.charAt(index)) && index < this.text.length) {
-        offset++;
-        index++;
-      }
-
-      return startFrom + offset;
-    },
-
-    /**
-     * Returns number of newlines in selected text
-     * @return {Number} Number of newlines in selected text
-     */
-    getNumNewLinesInSelectedText: function() {
-      var selectedText = this.getSelectedText(),
-          numNewLines = 0;
-
-      for (var i = 0, chars = selectedText.split(''), len = chars.length; i < len; i++) {
-        if (chars[i] === '\n') {
-          numNewLines++;
-        }
-      }
-      return numNewLines;
-    },
-
-    /**
-     * Finds index corresponding to beginning or end of a word
-     * @param {Number} selectionStart Index of a character
-     * @param {Number} direction: 1 or -1
-     * @return {Number} Index of the beginning or end of a word
-     */
-    searchWordBoundary: function(selectionStart, direction) {
-      var index = this._reSpace.test(this.text.charAt(selectionStart)) ? selectionStart - 1 : selectionStart,
-          _char = this.text.charAt(index),
-          reNonWord = /[ \n\.,;!\?\-]/;
-
-      while (!reNonWord.test(_char) && index > 0 && index < this.text.length) {
-        index += direction;
-        _char = this.text.charAt(index);
-      }
-      if (reNonWord.test(_char) && _char !== '\n') {
-        index += direction === 1 ? 0 : 1;
-      }
-      return index;
-    },
-
-    /**
-     * Selects a word based on the index
-     * @param {Number} selectionStart Index of a character
-     */
-    selectWord: function(selectionStart) {
-      var newSelectionStart = this.searchWordBoundary(selectionStart, -1), /* search backwards */
-          newSelectionEnd = this.searchWordBoundary(selectionStart, 1); /* search forward */
-
-      this.setSelectionStart(newSelectionStart);
-      this.setSelectionEnd(newSelectionEnd);
-    },
-
-    /**
-     * Selects a line based on the index
-     * @param {Number} selectionStart Index of a character
-     */
-    selectLine: function(selectionStart) {
-      var newSelectionStart = this.findLineBoundaryLeft(selectionStart),
-          newSelectionEnd = this.findLineBoundaryRight(selectionStart);
-
-      this.setSelectionStart(newSelectionStart);
-      this.setSelectionEnd(newSelectionEnd);
-    },
-
-    /**
-     * Enters editing state
-     * @return {fabric.IText} thisArg
-     * @chainable
-     */
-    enterEditing: function() {
-      if (this.isEditing || !this.editable) {
-        return;
-      }
-
-      if (this.canvas) {
-        this.exitEditingOnOthers(this.canvas);
-      }
-
-      this.isEditing = true;
-
-      this.initHiddenTextarea();
-      this.hiddenTextarea.focus();
-      this._updateTextarea();
-      this._saveEditingProps();
-      this._setEditingProps();
-
-      this._tick();
-      this.fire('editing:entered');
-
-      if (!this.canvas) {
-        return this;
-      }
-
-      this.canvas.renderAll();
-      this.canvas.fire('text:editing:entered', { target: this });
-      this.initMouseMoveHandler();
-      return this;
-    },
-
-    exitEditingOnOthers: function(canvas) {
-      if (canvas._iTextInstances) {
-        canvas._iTextInstances.forEach(function(obj) {
-          obj.selected = false;
-          if (obj.isEditing) {
-            obj.exitEditing();
-          }
-        });
-      }
-    },
-
-    /**
-    * Initializes "mousemove" event handler
-    */
-    initMouseMoveHandler: function() {
-      var _this = this;
-      this.canvas.on('mouse:move',  function(options) {
-        if (!_this.__isMousedown || !_this.isEditing) {
-          return;
-        }
-
-        var newSelectionStart = _this.getSelectionStartFromPointer(options.e);
-        if (newSelectionStart >= _this.__selectionStartOnMouseDown) {
-          _this.setSelectionStart(_this.__selectionStartOnMouseDown);
-          _this.setSelectionEnd(newSelectionStart);
-        }
-        else {
-          _this.setSelectionStart(newSelectionStart);
-          _this.setSelectionEnd(_this.__selectionStartOnMouseDown);
-        }
-      });
-    },
-
-    /**
-     * @private
-     */
-    _setEditingProps: function() {
-      this.hoverCursor = 'text';
-
-      if (this.canvas) {
-        this.canvas.defaultCursor = this.canvas.moveCursor = 'text';
-      }
-
-      this.borderColor = this.editingBorderColor;
-
-      this.hasControls = this.selectable = false;
-      this.lockMovementX = this.lockMovementY = true;
-    },
-
-    /**
-     * @private
-     */
-    _updateTextarea: function() {
-      if (!this.hiddenTextarea) {
-        return;
-      }
-
-      this.hiddenTextarea.value = this.text;
-      this.hiddenTextarea.selectionStart = this.selectionStart;
-      this.hiddenTextarea.selectionEnd = this.selectionEnd;
-    },
-
-    /**
-     * @private
-     */
-    _saveEditingProps: function() {
-      this._savedProps = {
-        hasControls: this.hasControls,
-        borderColor: this.borderColor,
-        lockMovementX: this.lockMovementX,
-        lockMovementY: this.lockMovementY,
-        hoverCursor: this.hoverCursor,
-        defaultCursor: this.canvas && this.canvas.defaultCursor,
-        moveCursor: this.canvas && this.canvas.moveCursor
-      };
-    },
-
-    /**
-     * @private
-     */
-    _restoreEditingProps: function() {
-      if (!this._savedProps) {
-        return;
-      }
-
-      this.hoverCursor = this._savedProps.overCursor;
-      this.hasControls = this._savedProps.hasControls;
-      this.borderColor = this._savedProps.borderColor;
-      this.lockMovementX = this._savedProps.lockMovementX;
-      this.lockMovementY = this._savedProps.lockMovementY;
-
-      if (this.canvas) {
-        this.canvas.defaultCursor = this._savedProps.defaultCursor;
-        this.canvas.moveCursor = this._savedProps.moveCursor;
-      }
-    },
-
-    /**
-     * Exits from editing state
-     * @return {fabric.IText} thisArg
-     * @chainable
-     */
-    exitEditing: function() {
-
-      this.selected = false;
-      this.isEditing = false;
-      this.selectable = true;
-
-      this.selectionEnd = this.selectionStart;
-      this.hiddenTextarea && this.canvas && this.hiddenTextarea.parentNode.removeChild(this.hiddenTextarea);
-      this.hiddenTextarea = null;
-
-      this.abortCursorAnimation();
-      this._restoreEditingProps();
-      this._currentCursorOpacity = 0;
-
-      this.fire('editing:exited');
-      this.canvas && this.canvas.fire('text:editing:exited', { target: this });
-
-      return this;
-    },
-
-    /**
-     * @private
-     */
-    _removeExtraneousStyles: function() {
-      for (var prop in this.styles) {
-        if (!this._textLines[prop]) {
-          delete this.styles[prop];
-        }
-      }
-    },
-
-    /**
-     * @private
-     */
-    _removeCharsFromTo: function(start, end) {
-
-      var i = end;
-      while (i !== start) {
-
-        var prevIndex = this.get2DCursorLocation(i).charIndex;
-        i--;
-
-        var index = this.get2DCursorLocation(i).charIndex,
-            isNewline = index > prevIndex;
-
-        if (isNewline) {
-          this.removeStyleObject(isNewline, i + 1);
-        }
-        else {
-          this.removeStyleObject(this.get2DCursorLocation(i).charIndex === 0, i);
-        }
-
-      }
-
-      this.text = this.text.slice(0, start) +
-                  this.text.slice(end);
-      this._clearCache();
-    },
-
-    /**
-     * Inserts a character where cursor is (replacing selection if one exists)
-     * @param {String} _chars Characters to insert
-     */
-    insertChars: function(_chars, useCopiedStyle) {
-      var isEndOfLine = this.text.slice(this.selectionStart, this.selectionStart + 1) === '\n';
-
-      this.text = this.text.slice(0, this.selectionStart) +
-                    _chars +
-                  this.text.slice(this.selectionEnd);
-
-      if (this.selectionStart === this.selectionEnd) {
-        this.insertStyleObjects(_chars, isEndOfLine, useCopiedStyle);
-      }
-      // else if (this.selectionEnd - this.selectionStart > 1) {
-      // TODO: replace styles properly
-      // console.log('replacing MORE than 1 char');
-      // }
-      this.setSelectionStart(this.selectionStart + _chars.length);
-      this.setSelectionEnd(this.selectionStart);
-      this._clearCache();
-      this.canvas && this.canvas.renderAll();
-
-      this.setCoords();
-      this.fire('changed');
-      this.canvas && this.canvas.fire('text:changed', { target: this });
-    },
-
-    /**
-     * Inserts new style object
-     * @param {Number} lineIndex Index of a line
-     * @param {Number} charIndex Index of a char
-     * @param {Boolean} isEndOfLine True if it's end of line
-     */
-    insertNewlineStyleObject: function(lineIndex, charIndex, isEndOfLine) {
-
-      this.shiftLineStyles(lineIndex, +1);
-
-      if (!this.styles[lineIndex + 1]) {
-        this.styles[lineIndex + 1] = { };
-      }
-
-      var currentCharStyle = this.styles[lineIndex][charIndex - 1],
-          newLineStyles = { };
-
-      // if there's nothing after cursor,
-      // we clone current char style onto the next (otherwise empty) line
-      if (isEndOfLine) {
-        newLineStyles[0] = clone(currentCharStyle);
-        this.styles[lineIndex + 1] = newLineStyles;
-      }
-      // otherwise we clone styles of all chars
-      // after cursor onto the next line, from the beginning
-      else {
-        for (var index in this.styles[lineIndex]) {
-          if (parseInt(index, 10) >= charIndex) {
-            newLineStyles[parseInt(index, 10) - charIndex] = this.styles[lineIndex][index];
-            // remove lines from the previous line since they're on a new line now
-            delete this.styles[lineIndex][index];
-          }
-        }
-        this.styles[lineIndex + 1] = newLineStyles;
-      }
-      this._clearCache();
-    },
-
-    /**
-     * Inserts style object for a given line/char index
-     * @param {Number} lineIndex Index of a line
-     * @param {Number} charIndex Index of a char
-     * @param {Object} [style] Style object to insert, if given
-     */
-    insertCharStyleObject: function(lineIndex, charIndex, style) {
-
-      var currentLineStyles = this.styles[lineIndex],
-          currentLineStylesCloned = clone(currentLineStyles);
-
-      if (charIndex === 0 && !style) {
-        charIndex = 1;
-      }
-
-      // shift all char styles by 1 forward
-      // 0,1,2,3 -> (charIndex=2) -> 0,1,3,4 -> (insert 2) -> 0,1,2,3,4
-      for (var index in currentLineStylesCloned) {
-        var numericIndex = parseInt(index, 10);
-        if (numericIndex >= charIndex) {
-          currentLineStyles[numericIndex + 1] = currentLineStylesCloned[numericIndex];
-          //delete currentLineStyles[index];
-        }
-      }
-
-      this.styles[lineIndex][charIndex] =
-        style || clone(currentLineStyles[charIndex - 1]);
-      this._clearCache();
-    },
-
-    /**
-     * Inserts style object(s)
-     * @param {String} _chars Characters at the location where style is inserted
-     * @param {Boolean} isEndOfLine True if it's end of line
-     * @param {Boolean} [useCopiedStyle] Style to insert
-     */
-    insertStyleObjects: function(_chars, isEndOfLine, useCopiedStyle) {
-      // removed shortcircuit over isEmptyStyles
-
-      var cursorLocation = this.get2DCursorLocation(),
-          lineIndex = cursorLocation.lineIndex,
-          charIndex = cursorLocation.charIndex;
-
-      if (!this.styles[lineIndex]) {
-        this.styles[lineIndex] = { };
-      }
-
-      if (_chars === '\n') {
-        this.insertNewlineStyleObject(lineIndex, charIndex, isEndOfLine);
-      }
-      else {
-        if (useCopiedStyle) {
-          this._insertStyles(this.copiedStyles);
-        }
-        else {
-          // TODO: support multiple style insertion if _chars.length > 1
-          this.insertCharStyleObject(lineIndex, charIndex);
-        }
-      }
-    },
-
-    /**
-     * @private
-     */
-    _insertStyles: function(styles) {
-      for (var i = 0, len = styles.length; i < len; i++) {
-
-        var cursorLocation = this.get2DCursorLocation(this.selectionStart + i),
-            lineIndex = cursorLocation.lineIndex,
-            charIndex = cursorLocation.charIndex;
-
-        this.insertCharStyleObject(lineIndex, charIndex, styles[i]);
-      }
-    },
-
-    /**
-     * Shifts line styles up or down
-     * @param {Number} lineIndex Index of a line
-     * @param {Number} offset Can be -1 or +1
-     */
-    shiftLineStyles: function(lineIndex, offset) {
-      // shift all line styles by 1 upward
-      var clonedStyles = clone(this.styles);
-      for (var line in this.styles) {
-        var numericLine = parseInt(line, 10);
-        if (numericLine > lineIndex) {
-          this.styles[numericLine + offset] = clonedStyles[numericLine];
-        }
-      }
-    },
-
-    /**
-     * Removes style object
-     * @param {Boolean} isBeginningOfLine True if cursor is at the beginning of line
-     * @param {Number} [index] Optional index. When not given, current selectionStart is used.
-     */
-    removeStyleObject: function(isBeginningOfLine, index) {
-
-      var cursorLocation = this.get2DCursorLocation(index),
-          lineIndex = cursorLocation.lineIndex,
-          charIndex = cursorLocation.charIndex;
-
-      if (isBeginningOfLine) {
-
-        var textOnPreviousLine = this._textLines[lineIndex - 1],
-            newCharIndexOnPrevLine = textOnPreviousLine
-              ? textOnPreviousLine.length
-              : 0;
-
-        if (!this.styles[lineIndex - 1]) {
-          this.styles[lineIndex - 1] = { };
-        }
-
-        for (charIndex in this.styles[lineIndex]) {
-          this.styles[lineIndex - 1][parseInt(charIndex, 10) + newCharIndexOnPrevLine]
-            = this.styles[lineIndex][charIndex];
-        }
-
-        this.shiftLineStyles(lineIndex, -1);
-      }
-      else {
-        var currentLineStyles = this.styles[lineIndex];
-
-        if (currentLineStyles) {
-          var offset = this.selectionStart === this.selectionEnd ? -1 : 0;
-          delete currentLineStyles[charIndex + offset];
-          // console.log('deleting', lineIndex, charIndex + offset);
-        }
-
-        var currentLineStylesCloned = clone(currentLineStyles);
-
-        // shift all styles by 1 backwards
-        for (var i in currentLineStylesCloned) {
-          var numericIndex = parseInt(i, 10);
-          if (numericIndex >= charIndex && numericIndex !== 0) {
-            currentLineStyles[numericIndex - 1] = currentLineStylesCloned[numericIndex];
-            delete currentLineStyles[numericIndex];
-          }
-        }
-      }
-    },
-
-    /**
-     * Inserts new line
-     */
-    insertNewline: function() {
-      this.insertChars('\n');
-    }
-  });
-})();
-
-
-fabric.util.object.extend(fabric.IText.prototype, /** @lends fabric.IText.prototype */ {
-  /**
-   * Initializes "dbclick" event handler
-   */
-  initDoubleClickSimulation: function() {
-
-    // for double click
-    this.__lastClickTime = +new Date();
-
-    // for triple click
-    this.__lastLastClickTime = +new Date();
-
-    this.__lastPointer = { };
-
-    this.on('mousedown', this.onMouseDown.bind(this));
-  },
-
-  onMouseDown: function(options) {
-
-    this.__newClickTime = +new Date();
-    var newPointer = this.canvas.getPointer(options.e);
-
-    if (this.isTripleClick(newPointer)) {
-      this.fire('tripleclick', options);
-      this._stopEvent(options.e);
-    }
-    else if (this.isDoubleClick(newPointer)) {
-      this.fire('dblclick', options);
-      this._stopEvent(options.e);
-    }
-
-    this.__lastLastClickTime = this.__lastClickTime;
-    this.__lastClickTime = this.__newClickTime;
-    this.__lastPointer = newPointer;
-    this.__lastIsEditing = this.isEditing;
-    this.__lastSelected = this.selected;
-  },
-
-  isDoubleClick: function(newPointer) {
-    return this.__newClickTime - this.__lastClickTime < 500 &&
-        this.__lastPointer.x === newPointer.x &&
-        this.__lastPointer.y === newPointer.y && this.__lastIsEditing;
-  },
-
-  isTripleClick: function(newPointer) {
-    return this.__newClickTime - this.__lastClickTime < 500 &&
-        this.__lastClickTime - this.__lastLastClickTime < 500 &&
-        this.__lastPointer.x === newPointer.x &&
-        this.__lastPointer.y === newPointer.y;
-  },
-
-  /**
-   * @private
-   */
-  _stopEvent: function(e) {
-    e.preventDefault && e.preventDefault();
-    e.stopPropagation && e.stopPropagation();
-  },
-
-  /**
-   * Initializes event handlers related to cursor or selection
-   */
-  initCursorSelectionHandlers: function() {
-    this.initSelectedHandler();
-    this.initMousedownHandler();
-    this.initMouseupHandler();
-    this.initClicks();
-  },
-
-  /**
-   * Initializes double and triple click event handlers
-   */
-  initClicks: function() {
-    this.on('dblclick', function(options) {
-      this.selectWord(this.getSelectionStartFromPointer(options.e));
-    });
-    this.on('tripleclick', function(options) {
-      this.selectLine(this.getSelectionStartFromPointer(options.e));
-    });
-  },
-
-  /**
-   * Initializes "mousedown" event handler
-   */
-  initMousedownHandler: function() {
-    this.on('mousedown', function(options) {
-
-      var pointer = this.canvas.getPointer(options.e);
-
-      this.__mousedownX = pointer.x;
-      this.__mousedownY = pointer.y;
-      this.__isMousedown = true;
-
-      if (this.hiddenTextarea && this.canvas) {
-        this.canvas.wrapperEl.appendChild(this.hiddenTextarea);
-      }
-
-      if (this.selected) {
-        this.setCursorByClick(options.e);
-      }
-
-      if (this.isEditing) {
-        this.__selectionStartOnMouseDown = this.selectionStart;
-        this.initDelayedCursor(true);
-      }
-    });
-  },
-
-  /**
-   * @private
-   */
-  _isObjectMoved: function(e) {
-    var pointer = this.canvas.getPointer(e);
-
-    return this.__mousedownX !== pointer.x ||
-           this.__mousedownY !== pointer.y;
-  },
-
-  /**
-   * Initializes "mouseup" event handler
-   */
-  initMouseupHandler: function() {
-    this.on('mouseup', function(options) {
-      this.__isMousedown = false;
-      if (this._isObjectMoved(options.e)) {
-        return;
-      }
-
-      if (this.__lastSelected) {
-        this.enterEditing();
-        this.initDelayedCursor(true);
-      }
-      this.selected = true;
-    });
-  },
-
-  /**
-   * Changes cursor location in a text depending on passed pointer (x/y) object
-   * @param {Event} e Event object
-   */
-  setCursorByClick: function(e) {
-    var newSelectionStart = this.getSelectionStartFromPointer(e);
-
-    if (e.shiftKey) {
-      if (newSelectionStart < this.selectionStart) {
-        this.setSelectionEnd(this.selectionStart);
-        this.setSelectionStart(newSelectionStart);
-      }
-      else {
-        this.setSelectionEnd(newSelectionStart);
-      }
-    }
-    else {
-      this.setSelectionStart(newSelectionStart);
-      this.setSelectionEnd(newSelectionStart);
-    }
-  },
-
-  /**
-   * @private
-   * @param {Event} e Event object
-   * @return {Object} Coordinates of a pointer (x, y)
-   */
-  _getLocalRotatedPointer: function(e) {
-    var pointer = this.canvas.getPointer(e),
-
-        pClicked = new fabric.Point(pointer.x, pointer.y),
-        pLeftTop = new fabric.Point(this.left, this.top),
-
-        rotated = fabric.util.rotatePoint(
-          pClicked, pLeftTop, fabric.util.degreesToRadians(-this.angle));
-
-    return this.getLocalPointer(e, rotated);
-  },
-
-  /**
-   * Returns index of a character corresponding to where an object was clicked
-   * @param {Event} e Event object
-   * @return {Number} Index of a character
-   */
-  getSelectionStartFromPointer: function(e) {
-    var mouseOffset = this._getLocalRotatedPointer(e),
-        prevWidth = 0,
-        width = 0,
-        height = 0,
-        charIndex = 0,
-        newSelectionStart,
-        line;
-
-    for (var i = 0, len = this._textLines.length; i < len; i++) {
-      line = this._textLines[i].split('');
-      height += this._getHeightOfLine(this.ctx, i) * this.scaleY;
-
-      var widthOfLine = this._getLineWidth(this.ctx, i),
-          lineLeftOffset = this._getLineLeftOffset(widthOfLine);
-
-      width = lineLeftOffset * this.scaleX;
-
-      if (this.flipX) {
-        // when oject is horizontally flipped we reverse chars
-        this._textLines[i] = line.reverse().join('');
-      }
-
-      for (var j = 0, jlen = line.length; j < jlen; j++) {
-
-        var _char = line[j];
-        prevWidth = width;
-
-        width += this._getWidthOfChar(this.ctx, _char, i, this.flipX ? jlen - j : j) *
-                 this.scaleX;
-
-        if (height <= mouseOffset.y || width <= mouseOffset.x) {
-          charIndex++;
-          continue;
-        }
-
-        return this._getNewSelectionStartFromOffset(
-          mouseOffset, prevWidth, width, charIndex + i, jlen);
-      }
-
-      if (mouseOffset.y < height) {
-        return this._getNewSelectionStartFromOffset(
-          mouseOffset, prevWidth, width, charIndex + i, jlen);
-      }
-    }
-
-    // clicked somewhere after all chars, so set at the end
-    if (typeof newSelectionStart === 'undefined') {
-      return this.text.length;
-    }
-  },
-
-  /**
-   * @private
-   */
-  _getNewSelectionStartFromOffset: function(mouseOffset, prevWidth, width, index, jlen) {
-
-    var distanceBtwLastCharAndCursor = mouseOffset.x - prevWidth,
-        distanceBtwNextCharAndCursor = width - mouseOffset.x,
-        offset = distanceBtwNextCharAndCursor > distanceBtwLastCharAndCursor ? 0 : 1,
-        newSelectionStart = index + offset;
-
-    // if object is horizontally flipped, mirror cursor location from the end
-    if (this.flipX) {
-      newSelectionStart = jlen - newSelectionStart;
-    }
-
-    if (newSelectionStart > this.text.length) {
-      newSelectionStart = this.text.length;
-    }
-
-    return newSelectionStart;
-  }
-});
-
-
-fabric.util.object.extend(fabric.IText.prototype, /** @lends fabric.IText.prototype */ {
-
-  /**
-   * Initializes hidden textarea (needed to bring up keyboard in iOS)
-   */
-  initHiddenTextarea: function() {
-    this.hiddenTextarea = fabric.document.createElement('textarea');
-
-    this.hiddenTextarea.setAttribute('autocapitalize', 'off');
-    this.hiddenTextarea.style.cssText = 'position: fixed; bottom: 20px; left: 0px; opacity: 0;'
-                                        + ' width: 0px; height: 0px; z-index: -999;';
-    fabric.document.body.appendChild(this.hiddenTextarea);
-
-    fabric.util.addListener(this.hiddenTextarea, 'keydown', this.onKeyDown.bind(this));
-    fabric.util.addListener(this.hiddenTextarea, 'keypress', this.onKeyPress.bind(this));
-    fabric.util.addListener(this.hiddenTextarea, 'copy', this.copy.bind(this));
-    fabric.util.addListener(this.hiddenTextarea, 'paste', this.paste.bind(this));
-
-    if (!this._clickHandlerInitialized && this.canvas) {
-      fabric.util.addListener(this.canvas.upperCanvasEl, 'click', this.onClick.bind(this));
-      this._clickHandlerInitialized = true;
-    }
-  },
-
-  /**
-   * @private
-   */
-  _keysMap: {
-    8:  'removeChars',
-    9:  'exitEditing',
-    27: 'exitEditing',
-    13: 'insertNewline',
-    33: 'moveCursorUp',
-    34: 'moveCursorDown',
-    35: 'moveCursorRight',
-    36: 'moveCursorLeft',
-    37: 'moveCursorLeft',
-    38: 'moveCursorUp',
-    39: 'moveCursorRight',
-    40: 'moveCursorDown',
-    46: 'forwardDelete'
-  },
-
-  /**
-   * @private
-   */
-  _ctrlKeysMap: {
-    65: 'selectAll',
-    88: 'cut'
-  },
-
-  onClick: function() {
-    // No need to trigger click event here, focus is enough to have the keyboard appear on Android
-    this.hiddenTextarea && this.hiddenTextarea.focus();
-  },
-
-  /**
-   * Handles keyup event
-   * @param {Event} e Event object
-   */
-  onKeyDown: function(e) {
-    if (!this.isEditing) {
-      return;
-    }
-    if (e.keyCode in this._keysMap) {
-      this[this._keysMap[e.keyCode]](e);
-    }
-    else if ((e.keyCode in this._ctrlKeysMap) && (e.ctrlKey || e.metaKey)) {
-      this[this._ctrlKeysMap[e.keyCode]](e);
-    }
-    else {
-      return;
-    }
-    e.stopImmediatePropagation();
-    e.preventDefault();
-    this.canvas && this.canvas.renderAll();
-  },
-
-  /**
-   * Forward delete
-   */
-  forwardDelete: function(e) {
-    if (this.selectionStart === this.selectionEnd) {
-      this.moveCursorRight(e);
-    }
-    this.removeChars(e);
-  },
-
-  /**
-   * Copies selected text
-   * @param {Event} e Event object
-   */
-  copy: function(e) {
-    var selectedText = this.getSelectedText(),
-        clipboardData = this._getClipboardData(e);
-
-    // Check for backward compatibility with old browsers
-    if (clipboardData) {
-      clipboardData.setData('text', selectedText);
-    }
-
-    this.copiedText = selectedText;
-    this.copiedStyles = this.getSelectionStyles(
-                          this.selectionStart,
-                          this.selectionEnd);
-  },
-
-  /**
-   * Pastes text
-   * @param {Event} e Event object
-   */
-  paste: function(e) {
-    var copiedText = null,
-        clipboardData = this._getClipboardData(e);
-
-    // Check for backward compatibility with old browsers
-    if (clipboardData) {
-      copiedText = clipboardData.getData('text');
-    }
-    else {
-      copiedText = this.copiedText;
-    }
-
-    if (copiedText) {
-      this.insertChars(copiedText, true);
-    }
-  },
-
-  /**
-   * Cuts text
-   * @param {Event} e Event object
-   */
-  cut: function(e) {
-    if (this.selectionStart === this.selectionEnd) {
-      return;
-    }
-
-    this.copy();
-    this.removeChars(e);
-  },
-
-  /**
-   * @private
-   * @param {Event} e Event object
-   * @return {Object} Clipboard data object
-   */
-  _getClipboardData: function(e) {
-    return e && (e.clipboardData || fabric.window.clipboardData);
-  },
-
-  /**
-   * Handles keypress event
-   * @param {Event} e Event object
-   */
-  onKeyPress: function(e) {
-    if (!this.isEditing || e.metaKey || e.ctrlKey) {
-      return;
-    }
-    if (e.which !== 0) {
-      this.insertChars(String.fromCharCode(e.which));
-    }
-    e.stopPropagation();
-  },
-
-  /**
-   * Gets start offset of a selection
-   * @param {Event} e Event object
-   * @param {Boolean} isRight
-   * @return {Number}
-   */
-  getDownCursorOffset: function(e, isRight) {
-    var selectionProp = isRight ? this.selectionEnd : this.selectionStart,
-        _char, lineLeftOffset,
-        textBeforeCursor = this.text.slice(0, selectionProp),
-        textAfterCursor = this.text.slice(selectionProp),
-
-        textOnSameLineBeforeCursor = textBeforeCursor.slice(textBeforeCursor.lastIndexOf('\n') + 1),
-        textOnSameLineAfterCursor = textAfterCursor.match(/(.*)\n?/)[1],
-        textOnNextLine = (textAfterCursor.match(/.*\n(.*)\n?/) || { })[1] || '',
-
-        cursorLocation = this.get2DCursorLocation(selectionProp);
-
-    // if on last line, down cursor goes to end of line
-    if (cursorLocation.lineIndex === this._textLines.length - 1 || e.metaKey || e.keyCode === 34) {
-
-      // move to the end of a text
-      return this.text.length - selectionProp;
-    }
-
-    var widthOfSameLineBeforeCursor = this._getLineWidth(this.ctx, cursorLocation.lineIndex);
-    lineLeftOffset = this._getLineLeftOffset(widthOfSameLineBeforeCursor);
-
-    var widthOfCharsOnSameLineBeforeCursor = lineLeftOffset,
-        lineIndex = cursorLocation.lineIndex;
-
-    for (var i = 0, len = textOnSameLineBeforeCursor.length; i < len; i++) {
-      _char = textOnSameLineBeforeCursor[i];
-      widthOfCharsOnSameLineBeforeCursor += this._getWidthOfChar(this.ctx, _char, lineIndex, i);
-    }
-
-    var indexOnNextLine = this._getIndexOnNextLine(
-      cursorLocation, textOnNextLine, widthOfCharsOnSameLineBeforeCursor);
-
-    return textOnSameLineAfterCursor.length + 1 + indexOnNextLine;
-  },
-
-  /**
-   * @private
-   */
-  _getIndexOnNextLine: function(cursorLocation, textOnNextLine, widthOfCharsOnSameLineBeforeCursor) {
-    var lineIndex = cursorLocation.lineIndex + 1,
-        widthOfNextLine = this._getLineWidth(this.ctx, lineIndex),
-        lineLeftOffset = this._getLineLeftOffset(widthOfNextLine),
-        widthOfCharsOnNextLine = lineLeftOffset,
-        indexOnNextLine = 0,
-        foundMatch;
-
-    for (var j = 0, jlen = textOnNextLine.length; j < jlen; j++) {
-
-      var _char = textOnNextLine[j],
-          widthOfChar = this._getWidthOfChar(this.ctx, _char, lineIndex, j);
-
-      widthOfCharsOnNextLine += widthOfChar;
-
-      if (widthOfCharsOnNextLine > widthOfCharsOnSameLineBeforeCursor) {
-
-        foundMatch = true;
-
-        var leftEdge = widthOfCharsOnNextLine - widthOfChar,
-            rightEdge = widthOfCharsOnNextLine,
-            offsetFromLeftEdge = Math.abs(leftEdge - widthOfCharsOnSameLineBeforeCursor),
-            offsetFromRightEdge = Math.abs(rightEdge - widthOfCharsOnSameLineBeforeCursor);
-
-        indexOnNextLine = offsetFromRightEdge < offsetFromLeftEdge ? j + 1 : j;
-
-        break;
-      }
-    }
-
-    // reached end
-    if (!foundMatch) {
-      indexOnNextLine = textOnNextLine.length;
-    }
-
-    return indexOnNextLine;
-  },
-
-  /**
-   * Moves cursor down
-   * @param {Event} e Event object
-   */
-  moveCursorDown: function(e) {
-    this.abortCursorAnimation();
-    this._currentCursorOpacity = 1;
-
-    var offset = this.getDownCursorOffset(e, this._selectionDirection === 'right');
-
-    if (e.shiftKey) {
-      this.moveCursorDownWithShift(offset);
-    }
-    else {
-      this.moveCursorDownWithoutShift(offset);
-    }
-
-    this.initDelayedCursor();
-  },
-
-  /**
-   * Moves cursor down without keeping selection
-   * @param {Number} offset
-   */
-  moveCursorDownWithoutShift: function(offset) {
-    this._selectionDirection = 'right';
-    this.setSelectionStart(this.selectionStart + offset);
-    this.setSelectionEnd(this.selectionStart);
-  },
-
-  /**
-   * private
-   */
-  swapSelectionPoints: function() {
-    var swapSel = this.selectionEnd;
-    this.setSelectionEnd(this.selectionStart);
-    this.setSelectionStart(swapSel);
-  },
-
-  /**
-   * Moves cursor down while keeping selection
-   * @param {Number} offset
-   */
-  moveCursorDownWithShift: function(offset) {
-    if (this.selectionEnd === this.selectionStart) {
-      this._selectionDirection = 'right';
-    }
-    if (this._selectionDirection === 'right') {
-      this.setSelectionEnd(this.selectionEnd + offset);
-    }
-    else {
-      this.setSelectionStart(this.selectionStart + offset);
-    }
-    if (this.selectionEnd < this.selectionStart  && this._selectionDirection === 'left') {
-      this.swapSelectionPoints();
-      this._selectionDirection = 'right';
-    }
-    if (this.selectionEnd > this.text.length) {
-      this.setSelectionEnd(this.text.length);
-    }
-  },
-
-  /**
-   * @param {Event} e Event object
-   * @param {Boolean} isRight
-   * @return {Number}
-   */
-  getUpCursorOffset: function(e, isRight) {
-    var selectionProp = isRight ? this.selectionEnd : this.selectionStart,
-        cursorLocation = this.get2DCursorLocation(selectionProp);
-    // if on first line, up cursor goes to start of line
-    if (cursorLocation.lineIndex === 0 || e.metaKey || e.keyCode === 33) {
-      return selectionProp;
-    }
-
-    var textBeforeCursor = this.text.slice(0, selectionProp),
-        textOnSameLineBeforeCursor = textBeforeCursor.slice(textBeforeCursor.lastIndexOf('\n') + 1),
-        textOnPreviousLine = (textBeforeCursor.match(/\n?(.*)\n.*$/) || {})[1] || '',
-        _char,
-        widthOfSameLineBeforeCursor = this._getLineWidth(this.ctx, cursorLocation.lineIndex),
-        lineLeftOffset = this._getLineLeftOffset(widthOfSameLineBeforeCursor),
-        widthOfCharsOnSameLineBeforeCursor = lineLeftOffset,
-        lineIndex = cursorLocation.lineIndex;
-
-    for (var i = 0, len = textOnSameLineBeforeCursor.length; i < len; i++) {
-      _char = textOnSameLineBeforeCursor[i];
-      widthOfCharsOnSameLineBeforeCursor += this._getWidthOfChar(this.ctx, _char, lineIndex, i);
-    }
-
-    var indexOnPrevLine = this._getIndexOnPrevLine(
-      cursorLocation, textOnPreviousLine, widthOfCharsOnSameLineBeforeCursor);
-
-    return textOnPreviousLine.length - indexOnPrevLine + textOnSameLineBeforeCursor.length;
-  },
-
-  /**
-   * @private
-   */
-  _getIndexOnPrevLine: function(cursorLocation, textOnPreviousLine, widthOfCharsOnSameLineBeforeCursor) {
-
-    var lineIndex = cursorLocation.lineIndex - 1,
-        widthOfPreviousLine = this._getLineWidth(this.ctx, lineIndex),
-        lineLeftOffset = this._getLineLeftOffset(widthOfPreviousLine),
-        widthOfCharsOnPreviousLine = lineLeftOffset,
-        indexOnPrevLine = 0,
-        foundMatch;
-
-    for (var j = 0, jlen = textOnPreviousLine.length; j < jlen; j++) {
-
-      var _char = textOnPreviousLine[j],
-          widthOfChar = this._getWidthOfChar(this.ctx, _char, lineIndex, j);
-
-      widthOfCharsOnPreviousLine += widthOfChar;
-
-      if (widthOfCharsOnPreviousLine > widthOfCharsOnSameLineBeforeCursor) {
-
-        foundMatch = true;
-
-        var leftEdge = widthOfCharsOnPreviousLine - widthOfChar,
-            rightEdge = widthOfCharsOnPreviousLine,
-            offsetFromLeftEdge = Math.abs(leftEdge - widthOfCharsOnSameLineBeforeCursor),
-            offsetFromRightEdge = Math.abs(rightEdge - widthOfCharsOnSameLineBeforeCursor);
-
-        indexOnPrevLine = offsetFromRightEdge < offsetFromLeftEdge ? j : (j - 1);
-
-        break;
-      }
-    }
-
-    // reached end
-    if (!foundMatch) {
-      indexOnPrevLine = textOnPreviousLine.length - 1;
-    }
-
-    return indexOnPrevLine;
-  },
-
-  /**
-   * Moves cursor up
-   * @param {Event} e Event object
-   */
-  moveCursorUp: function(e) {
-
-    this.abortCursorAnimation();
-    this._currentCursorOpacity = 1;
-
-    var offset = this.getUpCursorOffset(e, this._selectionDirection === 'right');
-    if (e.shiftKey) {
-      this.moveCursorUpWithShift(offset);
-    }
-    else {
-      this.moveCursorUpWithoutShift(offset);
-    }
-
-    this.initDelayedCursor();
-  },
-
-  /**
-   * Moves cursor up with shift
-   * @param {Number} offset
-   */
-  moveCursorUpWithShift: function(offset) {
-    if (this.selectionEnd === this.selectionStart) {
-      this._selectionDirection = 'left';
-    }
-    if (this._selectionDirection === 'right') {
-      this.setSelectionEnd(this.selectionEnd - offset);
-    }
-    else {
-      this.setSelectionStart(this.selectionStart - offset);
-    }
-    if (this.selectionEnd < this.selectionStart && this._selectionDirection === 'right') {
-      this.swapSelectionPoints();
-      this._selectionDirection = 'left';
-    }
-  },
-
-  /**
-   * Moves cursor up without shift
-   * @param {Number} offset
-   */
-  moveCursorUpWithoutShift: function(offset) {
-    if (this.selectionStart === this.selectionEnd) {
-      this.setSelectionStart(this.selectionStart - offset);
-    }
-    this.setSelectionEnd(this.selectionStart);
-
-    this._selectionDirection = 'left';
-  },
-
-  /**
-   * Moves cursor left
-   * @param {Event} e Event object
-   */
-  moveCursorLeft: function(e) {
-    if (this.selectionStart === 0 && this.selectionEnd === 0) {
-      return;
-    }
-
-    this.abortCursorAnimation();
-    this._currentCursorOpacity = 1;
-
-    if (e.shiftKey) {
-      this.moveCursorLeftWithShift(e);
-    }
-    else {
-      this.moveCursorLeftWithoutShift(e);
-    }
-
-    this.initDelayedCursor();
-  },
-
-  /**
-   * @private
-   */
-  _move: function(e, prop, direction) {
-    var propMethod = (prop === 'selectionStart' ? 'setSelectionStart' : 'setSelectionEnd');
-    if (e.altKey) {
-      this[propMethod](this['findWordBoundary' + direction](this[prop]));
-    }
-    else if (e.metaKey || e.keyCode === 35 ||  e.keyCode === 36 ) {
-      this[propMethod](this['findLineBoundary' + direction](this[prop]));
-    }
-    else {
-      this[propMethod](this[prop] + (direction === 'Left' ? -1 : 1));
-    }
-  },
-
-  /**
-   * @private
-   */
-  _moveLeft: function(e, prop) {
-    this._move(e, prop, 'Left');
-  },
-
-  /**
-   * @private
-   */
-  _moveRight: function(e, prop) {
-    this._move(e, prop, 'Right');
-  },
-
-  /**
-   * Moves cursor left without keeping selection
-   * @param {Event} e
-   */
-  moveCursorLeftWithoutShift: function(e) {
-    this._selectionDirection = 'left';
-
-    // only move cursor when there is no selection,
-    // otherwise we discard it, and leave cursor on same place
-    if (this.selectionEnd === this.selectionStart) {
-      this._moveLeft(e, 'selectionStart');
-    }
-    this.setSelectionEnd(this.selectionStart);
-  },
-
-  /**
-   * Moves cursor left while keeping selection
-   * @param {Event} e
-   */
-  moveCursorLeftWithShift: function(e) {
-    if (this._selectionDirection === 'right' && this.selectionStart !== this.selectionEnd) {
-      this._moveLeft(e, 'selectionEnd');
-    }
-    else {
-      this._selectionDirection = 'left';
-      this._moveLeft(e, 'selectionStart');
-
-      // increase selection by one if it's a newline
-      if (this.text.charAt(this.selectionStart) === '\n') {
-        this.setSelectionStart(this.selectionStart - 1);
-      }
-    }
-  },
-
-  /**
-   * Moves cursor right
-   * @param {Event} e Event object
-   */
-  moveCursorRight: function(e) {
-    if (this.selectionStart >= this.text.length && this.selectionEnd >= this.text.length) {
-      return;
-    }
-
-    this.abortCursorAnimation();
-    this._currentCursorOpacity = 1;
-
-    if (e.shiftKey) {
-      this.moveCursorRightWithShift(e);
-    }
-    else {
-      this.moveCursorRightWithoutShift(e);
-    }
-
-    this.initDelayedCursor();
-  },
-
-  /**
-   * Moves cursor right while keeping selection
-   * @param {Event} e
-   */
-  moveCursorRightWithShift: function(e) {
-    if (this._selectionDirection === 'left' && this.selectionStart !== this.selectionEnd) {
-      this._moveRight(e, 'selectionStart');
-    }
-    else {
-      this._selectionDirection = 'right';
-      this._moveRight(e, 'selectionEnd');
-
-      // increase selection by one if it's a newline
-      if (this.text.charAt(this.selectionEnd - 1) === '\n') {
-        this.setSelectionEnd(this.selectionEnd + 1);
-      }
-    }
-  },
-
-  /**
-   * Moves cursor right without keeping selection
-   * @param {Event} e Event object
-   */
-  moveCursorRightWithoutShift: function(e) {
-    this._selectionDirection = 'right';
-
-    if (this.selectionStart === this.selectionEnd) {
-      this._moveRight(e, 'selectionStart');
-      this.setSelectionEnd(this.selectionStart);
-    }
-    else {
-      this.setSelectionEnd(this.selectionEnd + this.getNumNewLinesInSelectedText());
-      this.setSelectionStart(this.selectionEnd);
-    }
-  },
-
-  /**
-   * Removes characters selected by selection
-   * @param {Event} e Event object
-   */
-  removeChars: function(e) {
-    if (this.selectionStart === this.selectionEnd) {
-      this._removeCharsNearCursor(e);
-    }
-    else {
-      this._removeCharsFromTo(this.selectionStart, this.selectionEnd);
-    }
-
-    this.setSelectionEnd(this.selectionStart);
-
-    this._removeExtraneousStyles();
-
-    this._clearCache();
-    this.canvas && this.canvas.renderAll();
-
-    this.setCoords();
-    this.fire('changed');
-    this.canvas && this.canvas.fire('text:changed', { target: this });
-  },
-
-  /**
-   * @private
-   * @param {Event} e Event object
-   */
-  _removeCharsNearCursor: function(e) {
-    if (this.selectionStart !== 0) {
-
-      if (e.metaKey) {
-        // remove all till the start of current line
-        var leftLineBoundary = this.findLineBoundaryLeft(this.selectionStart);
-
-        this._removeCharsFromTo(leftLineBoundary, this.selectionStart);
-        this.setSelectionStart(leftLineBoundary);
-      }
-      else if (e.altKey) {
-        // remove all till the start of current word
-        var leftWordBoundary = this.findWordBoundaryLeft(this.selectionStart);
-
-        this._removeCharsFromTo(leftWordBoundary, this.selectionStart);
-        this.setSelectionStart(leftWordBoundary);
-      }
-      else {
-        var isBeginningOfLine = this.text.slice(this.selectionStart - 1, this.selectionStart) === '\n';
-        this.removeStyleObject(isBeginningOfLine);
-        this.setSelectionStart(this.selectionStart - 1);
-        this.text = this.text.slice(0, this.selectionStart) +
-                    this.text.slice(this.selectionStart + 1);
-      }
-    }
-  }
-});
-
-
-/* _TO_SVG_START_ */
-fabric.util.object.extend(fabric.IText.prototype, /** @lends fabric.IText.prototype */ {
-
-  /**
-   * @private
-   */
-  _setSVGTextLineText: function(lineIndex, textSpans, height, textLeftOffset, textTopOffset, textBgRects) {
-    if (!this.styles[lineIndex]) {
-      this.callSuper('_setSVGTextLineText',
-        lineIndex, textSpans, height, textLeftOffset, textTopOffset);
-    }
-    else {
-      this._setSVGTextLineChars(
-        lineIndex, textSpans, height, textLeftOffset, textBgRects);
-    }
-  },
-
-  /**
-   * @private
-   */
-  _setSVGTextLineChars: function(lineIndex, textSpans, height, textLeftOffset, textBgRects) {
-
-    var chars = this._textLines[lineIndex].split(''),
-        charOffset = 0,
-        lineLeftOffset = this._getSVGLineLeftOffset(lineIndex) - this.width / 2,
-        lineOffset = this._getSVGLineTopOffset(lineIndex),
-        heightOfLine = this._getHeightOfLine(this.ctx, lineIndex);
-
-    for (var i = 0, len = chars.length; i < len; i++) {
-      var styleDecl = this.styles[lineIndex][i] || { };
-
-      textSpans.push(
-        this._createTextCharSpan(
-          chars[i], styleDecl, lineLeftOffset, lineOffset.lineTop + lineOffset.offset, charOffset));
-
-      var charWidth = this._getWidthOfChar(this.ctx, chars[i], lineIndex, i);
-
-      if (styleDecl.textBackgroundColor) {
-        textBgRects.push(
-          this._createTextCharBg(
-            styleDecl, lineLeftOffset, lineOffset.lineTop, heightOfLine, charWidth, charOffset));
-      }
-
-      charOffset += charWidth;
-    }
-  },
-
-  /**
-   * @private
-   */
-  _getSVGLineLeftOffset: function(lineIndex) {
-    return fabric.util.toFixed(this._getLineLeftOffset(this.__lineWidths[lineIndex]), 2);
-  },
-
-  /**
-   * @private
-   */
-  _getSVGLineTopOffset: function(lineIndex) {
-    var lineTopOffset = 0, lastHeight = 0;
-    for (var j = 0; j < lineIndex; j++) {
-      lineTopOffset += this._getHeightOfLine(this.ctx, j);
-    }
-    lastHeight = this._getHeightOfLine(this.ctx, j);
-    return {
-      lineTop: lineTopOffset,
-      offset: (this._fontSizeMult - this._fontSizeFraction) * lastHeight / (this.lineHeight * this._fontSizeMult)
-    };
-  },
-
-  /**
-   * @private
-   */
-  _createTextCharBg: function(styleDecl, lineLeftOffset, lineTopOffset, heightOfLine, charWidth, charOffset) {
-    return [
-      //jscs:disable validateIndentation
-      '<rect fill="', styleDecl.textBackgroundColor,
-      '" x="', lineLeftOffset + charOffset,
-      '" y="', lineTopOffset - this.height/2,
-      '" width="', charWidth,
-      '" height="', heightOfLine / this.lineHeight,
-      '"></rect>'
-      //jscs:enable validateIndentation
-    ].join('');
-  },
-
-  /**
-   * @private
-   */
-  _createTextCharSpan: function(_char, styleDecl, lineLeftOffset, lineTopOffset, charOffset) {
-
-    var fillStyles = this.getSvgStyles.call(fabric.util.object.extend({
-      visible: true,
-      fill: this.fill,
-      stroke: this.stroke,
-      type: 'text'
-    }, styleDecl));
-
-    return [
-      //jscs:disable validateIndentation
-      '<tspan x="', lineLeftOffset + charOffset, '" y="',
-        lineTopOffset - this.height/2, '" ',
-        (styleDecl.fontFamily ? 'font-family="' + styleDecl.fontFamily.replace(/"/g, '\'') + '" ': ''),
-        (styleDecl.fontSize ? 'font-size="' + styleDecl.fontSize + '" ': ''),
-        (styleDecl.fontStyle ? 'font-style="' + styleDecl.fontStyle + '" ': ''),
-        (styleDecl.fontWeight ? 'font-weight="' + styleDecl.fontWeight + '" ': ''),
-        (styleDecl.textDecoration ? 'text-decoration="' + styleDecl.textDecoration + '" ': ''),
-        'style="', fillStyles, '">',
-        fabric.util.string.escapeXml(_char),
-      '</tspan>'
-      //jscs:enable validateIndentation
-    ].join('');
-  }
-});
-/* _TO_SVG_END_ */
-
-
-(function() {
-
-  if (typeof document !== 'undefined' && typeof window !== 'undefined') {
-    return;
-  }
-
-  var DOMParser = require('xmldom').DOMParser,
-      URL = require('url'),
-      HTTP = require('http'),
-      HTTPS = require('https'),
-
-      Canvas = require('canvas'),
-      Image = require('canvas').Image;
-
-  /** @private */
-  function request(url, encoding, callback) {
-    var oURL = URL.parse(url);
-
-    // detect if http or https is used
-    if ( !oURL.port ) {
-      oURL.port = ( oURL.protocol.indexOf('https:') === 0 ) ? 443 : 80;
-    }
-
-    // assign request handler based on protocol
-    var reqHandler = (oURL.protocol.indexOf('https:') === 0 ) ? HTTPS : HTTP,
-        req = reqHandler.request({
-          hostname: oURL.hostname,
-          port: oURL.port,
-          path: oURL.path,
-          method: 'GET'
-        }, function(response) {
-          var body = '';
-          if (encoding) {
-            response.setEncoding(encoding);
-          }
-          response.on('end', function () {
-            callback(body);
-          });
-          response.on('data', function (chunk) {
-            if (response.statusCode === 200) {
-              body += chunk;
-            }
-          });
-        });
-
-    req.on('error', function(err) {
-      if (err.errno === process.ECONNREFUSED) {
-        fabric.log('ECONNREFUSED: connection refused to ' + oURL.hostname + ':' + oURL.port);
-      }
-      else {
-        fabric.log(err.message);
-      }
-    });
-
-    req.end();
-  }
-
-  /** @private */
-  function requestFs(path, callback) {
-    var fs = require('fs');
-    fs.readFile(path, function (err, data) {
-      if (err) {
-        fabric.log(err);
-        throw err;
-      }
-      else {
-        callback(data);
-      }
-    });
-  }
-
-  fabric.util.loadImage = function(url, callback, context) {
-    function createImageAndCallBack(data) {
-      img.src = new Buffer(data, 'binary');
-      // preserving original url, which seems to be lost in node-canvas
-      img._src = url;
-      callback && callback.call(context, img);
-    }
-    var img = new Image();
-    if (url && (url instanceof Buffer || url.indexOf('data') === 0)) {
-      img.src = img._src = url;
-      callback && callback.call(context, img);
-    }
-    else if (url && url.indexOf('http') !== 0) {
-      requestFs(url, createImageAndCallBack);
-    }
-    else if (url) {
-      request(url, 'binary', createImageAndCallBack);
-    }
-    else {
-      callback && callback.call(context, url);
-    }
-  };
-
-  fabric.loadSVGFromURL = function(url, callback, reviver) {
-    url = url.replace(/^\n\s*/, '').replace(/\?.*$/, '').trim();
-    if (url.indexOf('http') !== 0) {
-      requestFs(url, function(body) {
-        fabric.loadSVGFromString(body.toString(), callback, reviver);
-      });
-    }
-    else {
-      request(url, '', function(body) {
-        fabric.loadSVGFromString(body, callback, reviver);
-      });
-    }
-  };
-
-  fabric.loadSVGFromString = function(string, callback, reviver) {
-    var doc = new DOMParser().parseFromString(string);
-    fabric.parseSVGDocument(doc.documentElement, function(results, options) {
-      callback && callback(results, options);
-    }, reviver);
-  };
-
-  fabric.util.getScript = function(url, callback) {
-    request(url, '', function(body) {
-      eval(body);
-      callback && callback();
-    });
-  };
-
-  fabric.Image.fromObject = function(object, callback) {
-    fabric.util.loadImage(object.src, function(img) {
-      var oImg = new fabric.Image(img);
-
-      oImg._initConfig(object);
-      oImg._initFilters(object, function(filters) {
-        oImg.filters = filters || [ ];
-        callback && callback(oImg);
-      });
-    });
-  };
-
-  /**
-   * Only available when running fabric on node.js
-   * @param {Number} width Canvas width
-   * @param {Number} height Canvas height
-   * @param {Object} [options] Options to pass to FabricCanvas.
-   * @param {Object} [nodeCanvasOptions] Options to pass to NodeCanvas.
-   * @return {Object} wrapped canvas instance
-   */
-  fabric.createCanvasForNode = function(width, height, options, nodeCanvasOptions) {
-    nodeCanvasOptions = nodeCanvasOptions || options;
-
-    var canvasEl = fabric.document.createElement('canvas'),
-        nodeCanvas = new Canvas(width || 600, height || 600, nodeCanvasOptions);
-
-    // jsdom doesn't create style on canvas element, so here be temp. workaround
-    canvasEl.style = { };
-
-    canvasEl.width = nodeCanvas.width;
-    canvasEl.height = nodeCanvas.height;
-
-    var FabricCanvas = fabric.Canvas || fabric.StaticCanvas,
-        fabricCanvas = new FabricCanvas(canvasEl, options);
-
-    fabricCanvas.contextContainer = nodeCanvas.getContext('2d');
-    fabricCanvas.nodeCanvas = nodeCanvas;
-    fabricCanvas.Font = Canvas.Font;
-
-    return fabricCanvas;
-  };
-
-  /** @ignore */
-  fabric.StaticCanvas.prototype.createPNGStream = function() {
-    return this.nodeCanvas.createPNGStream();
-  };
-
-  fabric.StaticCanvas.prototype.createJPEGStream = function(opts) {
-    return this.nodeCanvas.createJPEGStream(opts);
-  };
-
-  var origSetWidth = fabric.StaticCanvas.prototype.setWidth;
-  fabric.StaticCanvas.prototype.setWidth = function(width, options) {
-    origSetWidth.call(this, width, options);
-    this.nodeCanvas.width = width;
-    return this;
-  };
-  if (fabric.Canvas) {
-    fabric.Canvas.prototype.setWidth = fabric.StaticCanvas.prototype.setWidth;
-  }
-
-  var origSetHeight = fabric.StaticCanvas.prototype.setHeight;
-  fabric.StaticCanvas.prototype.setHeight = function(height, options) {
-    origSetHeight.call(this, height, options);
-    this.nodeCanvas.height = height;
-    return this;
-  };
-  if (fabric.Canvas) {
-    fabric.Canvas.prototype.setHeight = fabric.StaticCanvas.prototype.setHeight;
-  }
-
-})();
-
