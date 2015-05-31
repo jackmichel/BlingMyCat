@@ -6,7 +6,9 @@
     </button>
     <div class="row wrap-row">
       <div class="col col-33" ng-repeat="image in images">
-        <img class="col" ng-src="{{urlForImage(image)}}"/>        
+        <a href="#/tab/bling/{{image}}">
+          <img class="col" ng-src="{{urlForImage(image)}}"/>       
+        </a>
       </div>
     </div>
   </ion-content>

@@ -1,30 +1,4 @@
-angular.module('starter.services', [])
-
-.factory('FileService', function() {
-  var images;
-  var IMAGE_STORAGE_KEY = 'images';
- 
-  function getImages() {
-    var img = window.localStorage.getItem(IMAGE_STORAGE_KEY);
-    if (img) {
-      images = JSON.parse(img);
-    } else {
-      images = [];
-    }
-    return images;
-  };
- 
-  function addImage(img) {
-    images.push(img);
-    window.localStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify(images));
-    alert(window.localStorage.getItem(IMAGE_STORAGE_KEY));
-  };
- 
-  return {
-    storeImage: addImage,
-    images: getImages
-  }
-})
+angular.module('starter')
 
 .factory('ImageService', function($cordovaCamera, FileService, $q, $cordovaFile) {
  
@@ -71,11 +45,9 @@ angular.module('starter.services', [])
         var newName = makeid() + name;
         $cordovaFile.copyFile(namePath, name, cordova.file.dataDirectory, newName)
           .then(function(info) {
-            alert('copy worked');
             FileService.storeImage(newName);
             resolve();
           }, function(e) {
-            alert(JSON.stringify(e));
             reject();
           });
       });
