@@ -2,7 +2,7 @@ angular
   .module('starter')
   .directive('imageEditor', imageEditor);
 
-function imageEditor($cordovaFile, imageStore) {
+function imageEditor($cordovaFile, imageStore, blob) {
   return {
     restrict: 'E',
     scope: { currentImage: '=' },
@@ -37,47 +37,12 @@ function imageEditor($cordovaFile, imageStore) {
       canvas.add(imgInstance);
 
       element.find('button').on('click', function() {
-        var blob = canvasToBlob(canvas);
+        var imageBlob = blob.canvasToBlob(canvas);
 
-        $cordovaFile.writeFile(cordova.file.dataDirectory, 'a' + scope.currentImage, blob, true).then(function(e) {
+        $cordovaFile.writeFile(cordova.file.dataDirectory, 'a' + scope.currentImage, imageBlob, true).then(function(e) {
           imageStore.storeImage('a' + scope.currentImage);
         });
       });
     }
   }
-}
-
-function canvasToBlob(canvas, contentType) {
-  contentType = contentType || 'image/jpeg';
-  return b64ToBlob(canvas.toDataURL(contentType));
-}
-
-function b64ToBlob(b64Data, contentType) {
-    contentType = contentType || 'image/jpeg';
-
-    var b64Data = b64Data.split(',')[1]; 
-    var sliceSize = 512;
-    var byteCharacters = decodeFromBase64(b64Data);
-    var byteArrays = [];
-
-    for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-        var slice = byteCharacters.slice(offset, offset + sliceSize);
-
-        var byteNumbers = new Array(slice.length);
-        for (var i = 0; i < slice.length; i++) {
-            byteNumbers[i] = slice.charCodeAt(i);
-        }
-
-        var byteArray = new Uint8Array(byteNumbers);
-
-        byteArrays.push(byteArray);
-    }
-
-    var blob = new Blob(byteArrays, {type: contentType});
-    return blob;
-}
-
-function decodeFromBase64(input) {
-  input = input.replace(/\s/g, '');
-  return atob(input);
 }
