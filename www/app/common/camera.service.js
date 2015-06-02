@@ -2,17 +2,7 @@ angular
   .module('starter')
   .factory('camera', camera);
  
-function camera($cordovaCamera, imageStore, $q, $cordovaFile) {
-  function makeid() {
-    var text = '';
-    var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
- 
-    for (var i = 0; i < 5; i++) {
-      text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
-  };
- 
+function camera($cordovaCamera, imageStore, $q, $cordovaFile, utilities) { 
   function optionsForType(type) {
     var source;
     switch (type) {
@@ -43,7 +33,7 @@ function camera($cordovaCamera, imageStore, $q, $cordovaFile) {
       $cordovaCamera.getPicture(options).then(function(imageUrl) {
         var name = imageUrl.substr(imageUrl.lastIndexOf('/') + 1);
         var namePath = imageUrl.substr(0, imageUrl.lastIndexOf('/') + 1);
-        var newName = makeid() + name;
+        var newName = utilities.makeId() + name;
         $cordovaFile.copyFile(namePath, name, cordova.file.dataDirectory, newName)
           .then(function(info) {
             imageStore.storeImage(newName);

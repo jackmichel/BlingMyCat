@@ -2,7 +2,7 @@ angular
   .module('starter')
   .directive('imageEditor', imageEditor);
 
-function imageEditor($cordovaFile, imageStore, blob) {
+function imageEditor($cordovaFile, imageStore, blob, utilities) {
   return {
     restrict: 'E',
     scope: { currentImage: '=' },
@@ -38,9 +38,10 @@ function imageEditor($cordovaFile, imageStore, blob) {
 
       element.find('button').on('click', function() {
         var imageBlob = blob.canvasToBlob(canvas);
+        var newName = utilities.makeId();
 
-        $cordovaFile.writeFile(cordova.file.dataDirectory, 'a' + scope.currentImage, imageBlob, true).then(function(e) {
-          imageStore.storeImage('a' + scope.currentImage);
+        $cordovaFile.writeFile(cordova.file.dataDirectory, newName, imageBlob, true).then(function(e) {
+          imageStore.storeImage(newName);
         });
       });
     }
