@@ -2,7 +2,7 @@ angular
   .module('starter')
   .directive('imageEditor', ImageEditorDirective);
 
-function ImageEditorDirective($cordovaFile) {
+function ImageEditorDirective($cordovaFile, FileService) {
   return {
     restrict: 'E',
     scope: { currentImage: '=' },
@@ -37,22 +37,26 @@ function ImageEditorDirective($cordovaFile) {
       canvas.add(imgInstance);
 
       element.find('button').on('click', function() {
-        var img_b64 = canvas.toDataURL('image/jpeg');
-        var jpeg = img_b64.split(',')[1];
-        var blob = b64toBlob(jpeg, 'image/jpeg');
+        var blob = canvasToBlob(canvas);
 
-        $cordovaFile.writeFile(cordova.file.dataDirectory, scope.currentImage, blob, true).then(function(e) {
-          console.log(e);
+        $cordovaFile.writeFile(cordova.file.dataDirectory, 'a' + scope.currentImage, blob, true).then(function(e) {
+          FileService.storeImage('a' + scope.currentImage);
         });
       });
     }
   }
 }
 
-function b64toBlob(b64Data, contentType, sliceSize) {
-    contentType = contentType || '';
-    sliceSize = sliceSize || 512;
+function canvasToBlob(canvas, contentType) {
+  contentType = contentType || 'image/jpeg';
+  return b64ToBlob(canvas.toDataURL(contentType));
+}
 
+function b64ToBlob(b64Data, contentType) {
+    contentType = contentType || 'image/jpeg';
+
+    var b64Data = b64Data.split(',')[1]; 
+    var sliceSize = 512;
     var byteCharacters = decodeFromBase64(b64Data);
     var byteArrays = [];
 
