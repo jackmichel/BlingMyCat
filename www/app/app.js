@@ -30,41 +30,40 @@ angular.module('starter', ['ionic', 'ngCordova'])
   $stateProvider
 
   // setup an abstract state for the tabs directive
-    .state('tab', {
+  .state('tab', {
     url: "/tab",
     abstract: true,
-    templateUrl: "templates/tabs.html"
+    templateUrl: "app/tabs.html"
   })
 
   // Each tab has its own nav history stack:
 
-  .state('tab.bling', {
-    url: '/bling',
+  .state('tab.image-view', {
+    url: '/image-view',
     views: {
-      'tab-bling': {
-        templateUrl: 'templates/tab-bling.html',
-        controller: 'ImageController'
+      'tab-image-view': {
+        templateUrl: 'app/tab-image-view/tab-image-view.html',
+        controller: 'ImageViewCtrl'
       }
     }
   })
 
-  .state('tab.account', {
-    url: '/account',
+  .state('tab.about', {
+    url: '/about',
     views: {
-      'tab-account': {
-        templateUrl: 'templates/tab-account.html',
-        controller: 'AccountCtrl'
+      'tab-about': {
+        templateUrl: 'app/tab-about/tab-about.html'
       }
     }
   })
 
-  .state('bling-detail', {
-    url: '/bling-detail/:image',
-    templateUrl: 'templates/bling-detail.html',
-    controller: 'BlingDetailController'
+  .state('image-edit', {
+    url: '/image-edit/:image',
+    templateUrl: 'app/image-edit/image-edit.html',
+    controller: 'ImageEditCtrl'
   });
 
   // if none of the above states are matched, use this as the fallback
-  $urlRouterProvider.otherwise('/tab/bling');
+  $urlRouterProvider.otherwise('/tab/image-view');
 
 });

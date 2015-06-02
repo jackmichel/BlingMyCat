@@ -1,8 +1,8 @@
 angular
   .module('starter')
-  .factory('FileService', FileService);
+  .factory('imageStore', imageStore);
 
-function FileService() {
+function imageStore() {
   var images;
   var IMAGE_STORAGE_KEY = 'images';
  

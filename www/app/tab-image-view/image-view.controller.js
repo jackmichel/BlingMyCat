@@ -1,15 +1,15 @@
 angular
   .module('starter')
-  .controller('ImageController', ImageController);
+  .controller('ImageViewCtrl', ImageViewCtrl);
 
-function ImageController($timeout, $scope, $cordovaDevice, $cordovaFile, $ionicPlatform, $ionicActionSheet, ImageService, FileService) {
+function ImageViewCtrl($timeout, $scope, $cordovaDevice, $cordovaFile, $ionicPlatform, $ionicActionSheet, camera, imageStore) {
   $ionicPlatform.ready(function() {
-    $scope.images = FileService.images();
+    $scope.images = imageStore.images();
     $timeout(function() {
         $scope.$apply();
     });
   });
- 
+  
   $scope.urlForImage = function(imageName) {
     var trueOrigin = cordova.file.dataDirectory + imageName;
     return trueOrigin;
@@ -31,8 +31,10 @@ function ImageController($timeout, $scope, $cordovaDevice, $cordovaFile, $ionicP
  
   $scope.addImage = function(type) {
     $scope.hideSheet();
-    ImageService.handleMediaDialog(type).then(function() {
-      $scope.$apply();
+    camera.handleMediaDialog(type).then(function() {
+      $timeout(function() {
+          $scope.$apply();
+      });
     });
   }
 }

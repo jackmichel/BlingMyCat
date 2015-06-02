@@ -1,8 +1,8 @@
 angular
   .module('starter')
-  .factory('ImageService', ImageService);
+  .factory('camera', camera);
  
-function ImageService($cordovaCamera, FileService, $q, $cordovaFile) {
+function camera($cordovaCamera, imageStore, $q, $cordovaFile) {
   function makeid() {
     var text = '';
     var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -46,7 +46,7 @@ function ImageService($cordovaCamera, FileService, $q, $cordovaFile) {
         var newName = makeid() + name;
         $cordovaFile.copyFile(namePath, name, cordova.file.dataDirectory, newName)
           .then(function(info) {
-            FileService.storeImage(newName);
+            imageStore.storeImage(newName);
             resolve();
           }, function(e) {
             reject();

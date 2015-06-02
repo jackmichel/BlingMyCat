@@ -1,8 +1,8 @@
 angular
   .module('starter')
-  .directive('imageEditor', ImageEditorDirective);
+  .directive('imageEditor', imageEditor);
 
-function ImageEditorDirective($cordovaFile, FileService) {
+function imageEditor($cordovaFile, imageStore) {
   return {
     restrict: 'E',
     scope: { currentImage: '=' },
@@ -40,7 +40,7 @@ function ImageEditorDirective($cordovaFile, FileService) {
         var blob = canvasToBlob(canvas);
 
         $cordovaFile.writeFile(cordova.file.dataDirectory, 'a' + scope.currentImage, blob, true).then(function(e) {
-          FileService.storeImage('a' + scope.currentImage);
+          imageStore.storeImage('a' + scope.currentImage);
         });
       });
     }
