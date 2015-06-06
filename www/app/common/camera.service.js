@@ -2,7 +2,9 @@ angular
   .module('starter')
   .factory('camera', camera);
  
-function camera($cordovaCamera, imageStore, $q, $cordovaFile, utilities) { 
+function camera($cordovaCamera, imageStore, $q, $cordovaFile, utilities, $state) { 
+  var currentImage;
+
   function optionsForType(type) {
     var source;
     switch (type) {
@@ -14,7 +16,7 @@ function camera($cordovaCamera, imageStore, $q, $cordovaFile, utilities) {
         break;
     }
     return {
-      destinationType: Camera.DestinationType.FILE_URI,
+      destinationType: Camera.DestinationType.DATA_URL,
       sourceType: source,
       allowEdit: false,
       encodingType: Camera.EncodingType.JPEG,
@@ -26,25 +28,19 @@ function camera($cordovaCamera, imageStore, $q, $cordovaFile, utilities) {
     };
   }
  
-  function saveMedia(type) {
-    return $q(function(resolve, reject) {
-      var options = optionsForType(type);
- 
-      $cordovaCamera.getPicture(options).then(function(imageUrl) {
-        var name = imageUrl.substr(imageUrl.lastIndexOf('/') + 1);
-        var namePath = imageUrl.substr(0, imageUrl.lastIndexOf('/') + 1);
-        var newName = utilities.makeId() + name;
-        $cordovaFile.copyFile(namePath, name, cordova.file.dataDirectory, newName)
-          .then(function(info) {
-            imageStore.storeImage(newName);
-            resolve();
-          }, function(e) {
-            reject();
-          });
-      });
-    })
+  function getImage(type) {
+    $cordovaCamera.getPicture(optionsForType(type)).then(function(dataUrl) {
+      currentImage = dataUrl;
+      $state.go('image-crop');
+    });
   }
+
+  function getCurrentImage() {
+    return currentImage;
+  }
+
   return {
-    handleMediaDialog: saveMedia
+    getImage: getImage,
+    getCurrentImage: getCurrentImage
   }
 }

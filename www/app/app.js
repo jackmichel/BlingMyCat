@@ -43,7 +43,7 @@ angular.module('starter', ['ionic', 'ngCordova'])
     views: {
       'tab-image-view': {
         templateUrl: 'app/tab-image-view/tab-image-view.html',
-        controller: 'ImageViewCtrl'
+        controller: 'ImageViewCtrl as imageview'
       }
     }
   })
@@ -61,6 +61,12 @@ angular.module('starter', ['ionic', 'ngCordova'])
     url: '/image-edit/:image',
     templateUrl: 'app/image-edit/image-edit.html',
     controller: 'ImageEditCtrl'
+  })
+
+  .state('image-crop', {
+    url: '/image-crop',
+    templateUrl: 'app/image-crop/image-crop.html',
+    controller: 'ImageCropCtrl'
   });
 
   // if none of the above states are matched, use this as the fallback

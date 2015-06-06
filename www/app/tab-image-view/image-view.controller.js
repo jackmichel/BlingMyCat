@@ -2,21 +2,22 @@ angular
   .module('starter')
   .controller('ImageViewCtrl', ImageViewCtrl);
 
-function ImageViewCtrl($timeout, $scope, $cordovaDevice, $cordovaFile, $ionicPlatform, $ionicActionSheet, camera, imageStore) {
-  $ionicPlatform.ready(function() {
-    $scope.images = imageStore.images();
-    $timeout(function() {
-        $scope.$apply();
-    });
-  });
-  
-  $scope.urlForImage = function(imageName) {
+function ImageViewCtrl($ionicActionSheet, camera, imageStore) {
+  var vm = this;
+
+  vm.images = imageStore.images();
+  vm.urlForImage = urlForImage;
+  vm.addImage = addImage;
+
+  ////////////
+
+  function urlForImage(imageName) {
     var trueOrigin = cordova.file.dataDirectory + imageName;
     return trueOrigin;
   }
- 
-  $scope.addMedia = function() {
-    $scope.hideSheet = $ionicActionSheet.show({
+  
+  function addImage(type) {
+    var hideSheet = $ionicActionSheet.show({
       buttons: [
         { text: 'Take photo' },
         { text: 'Photo from library' }
@@ -24,17 +25,10 @@ function ImageViewCtrl($timeout, $scope, $cordovaDevice, $cordovaFile, $ionicPla
       titleText: 'Add images',
       cancelText: 'Cancel',
       buttonClicked: function(index) {
-        $scope.addImage(index);
+        camera.getImage(index);
+        hideSheet();
       }
     });
   }
- 
-  $scope.addImage = function(type) {
-    $scope.hideSheet();
-    camera.handleMediaDialog(type).then(function() {
-      $timeout(function() {
-          $scope.$apply();
-      });
-    });
-  }
+  
 }
