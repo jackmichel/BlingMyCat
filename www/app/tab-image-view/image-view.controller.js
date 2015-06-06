@@ -30,5 +30,4 @@ function ImageViewCtrl($ionicActionSheet, camera, imageStore) {
       }
     });
   }
-  
 }

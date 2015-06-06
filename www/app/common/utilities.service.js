@@ -3,6 +3,13 @@ angular
   .factory('utilities', utilities);
 
 function utilities() {
+
+  return {
+    makeId: makeId
+  }
+
+  ////////////
+
   function makeId() {
     var text = '';
     var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -14,9 +21,5 @@ function utilities() {
     text += Date.now();
 
     return text;
-  };
-
-  return {
-    makeId: makeId
   }
 }

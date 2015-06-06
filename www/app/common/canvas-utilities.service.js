@@ -4,6 +4,14 @@ angular
 
 function canvasUtilities() {
 
+  return {
+    createCanvas: createCanvas,
+    addImgSrc: addImgSrc,
+    addImgDataUrl: addImgDataUrl
+  }
+
+  ////////////
+
   function createCanvas(element) {
     var canvasWidth = window.screen.width;
     var canvasHeight = canvasWidth;
@@ -53,11 +61,4 @@ function canvasUtilities() {
 
     };
   }
-
-  return {
-    createCanvas: createCanvas,
-    addImgSrc: addImgSrc,
-    addImgDataUrl: addImgDataUrl
-  }
-
 }

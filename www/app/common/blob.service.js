@@ -3,6 +3,14 @@ angular
   .factory('blob', blob);
 
 function blob() {
+
+  return {
+    canvasToBlob: canvasToBlob,
+    b64ToBlob: b64ToBlob
+  }
+
+  ////////////
+
   function canvasToBlob(canvas, contentType) {
     contentType = contentType || 'image/jpeg';
     return b64ToBlob(canvas.toDataURL(contentType));
@@ -36,10 +44,5 @@ function blob() {
   function decodeFromBase64(input) {
     input = input.replace(/\s/g, '');
     return atob(input);
-  }
-
-  return {
-    canvasToBlob: canvasToBlob,
-    b64ToBlob: b64ToBlob
   }
 }

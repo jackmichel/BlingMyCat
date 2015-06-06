@@ -3,7 +3,15 @@ angular
   .factory('camera', camera);
  
 function camera($cordovaCamera, imageStore, $q, $cordovaFile, utilities, $state) { 
+
   var currentImage;
+  
+  return {
+    getImage: getImage,
+    getCurrentImage: getCurrentImage
+  }
+
+  //////////////
 
   function optionsForType(type) {
     var source;
@@ -37,10 +45,5 @@ function camera($cordovaCamera, imageStore, $q, $cordovaFile, utilities, $state)
 
   function getCurrentImage() {
     return currentImage;
-  }
-
-  return {
-    getImage: getImage,
-    getCurrentImage: getCurrentImage
   }
 }

@@ -3,8 +3,17 @@ angular
   .factory('imageStore', imageStore);
 
 function imageStore() {
+
   var images;
   var IMAGE_STORAGE_KEY = 'images';
+  
+  return {
+    storeImage: addImage,
+    images: getImages,
+    imageCache: images
+  }
+
+  ////////////
  
   function getImages() {
     var img = window.localStorage.getItem(IMAGE_STORAGE_KEY);
@@ -14,16 +23,10 @@ function imageStore() {
       images = [];
     }
     return images;
-  };
+  }
  
   function addImage(img) {
     images.push(img);
     window.localStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify(images));
-  };
- 
-  return {
-    storeImage: addImage,
-    images: getImages,
-    imageCache: images
   }
 }
