@@ -14,13 +14,23 @@ function canvasUtilities() {
     return canvas;
   }
 
+  function addImgSrc(canvas, imgSrc) {
+    var img = document.createElement('img');
+    img.src = cordova.file.dataDirectory + imgSrc;
+
+    img.onload = onImageLoad(canvas, img);
+  } 
+
   function addImgDataUrl(canvas, imgDataUrl) {
     var img = document.createElement('img');
     img.src = 'data:image/jpeg;charset=utf-8;base64,' + imgDataUrl;
-    var imgInstance;
 
-    img.onload = function() {
-      imgInstance = new fabric.Image(img, {
+    img.onload = onImageLoad(canvas, img);
+  } 
+
+  function onImageLoad(canvas, img) {
+    return function() {
+      var imgInstance = new fabric.Image(img, {
           top: 0,
           left: 0
       });
@@ -29,6 +39,7 @@ function canvasUtilities() {
       imgInstance.lockRotation = true;
       imgInstance.lockScalingX = true;
       imgInstance.lockScalingY = true;
+
       // Is the image taller or wider?
       if (img.width > img.height) {
         imgInstance.scaleToHeight(canvas.height + 1);
@@ -37,34 +48,11 @@ function canvasUtilities() {
         imgInstance.scaleToWidth(canvas.width + 1);
         imgInstance.lockMovementX = true;
       }
+
       canvas.add(imgInstance);
-    }
 
-  } 
-
-  function addImgSrc(canvas, imgSrc) {
-    var img = document.createElement('img');
-    img.src = imgSrc;
-
-    var imgInstance = new fabric.Image(img, {
-        top: 0,
-        left: 0
-    });
-
-    imgInstance.hasBorders = false;
-    imgInstance.lockRotation = true;
-    imgInstance.lockScalingX = true;
-    imgInstance.lockScalingY = true;
-    // Is the image taller or wider?
-    if (img.width > img.height) {
-      imgInstance.scaleToHeight(canvas.height + 1);
-      imgInstance.lockMovementY = true;
-    } else {
-      imgInstance.scaleToWidth(canvas.width + 1);
-      imgInstance.lockMovementX = true;
-    }
-    canvas.add(imgInstance);
-  } 
+    };
+  }
 
   return {
     createCanvas: createCanvas,

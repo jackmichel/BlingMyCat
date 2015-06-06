@@ -9,7 +9,7 @@ function imageEditor($cordovaFile, imageStore, blob, utilities, canvasUtilities)
     template: '<canvas></canvas><button>Save</button>',
     link: function(scope, element, attr) {
       var canvas = canvasUtilities.createCanvas(element.find('canvas')[0]);
-      canvasUtilities.addImgSrc(canvas, cordova.file.dataDirectory + scope.currentImage);
+      canvasUtilities.addImgSrc(canvas, scope.currentImage);
 
       element.find('button').on('click', function() {
         var imageBlob = blob.canvasToBlob(canvas);
