@@ -66,7 +66,7 @@ angular.module('starter', ['ionic', 'ngCordova'])
   .state('image-crop', {
     url: '/image-crop',
     templateUrl: 'app/image-crop/image-crop.html',
-    controller: 'ImageCropCtrl'
+    controller: 'ImageCropCtrl as imagecrop'
   });
 
   // if none of the above states are matched, use this as the fallback

@@ -2,8 +2,9 @@ angular
   .module('starter')
   .controller('ImageCropCtrl', ImageCropCtrl);
 
-function ImageCropCtrl($ionicActionSheet, $scope, camera) {
+function ImageCropCtrl(camera) {
+  var vm = this;
 
-  console.log(camera.getCurrentImage());
+  vm.currentImage = camera.getCurrentImage();
 
 }
