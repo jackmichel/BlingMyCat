@@ -1,32 +1,37 @@
-angular
-  .module('starter')
-  .factory('imageStore', imageStore);
+(function() {
+  'use strict';
 
-function imageStore() {
+  angular
+    .module('BlingMyCat')
+    .factory('imageStore', imageStore);
 
-  var images;
-  var IMAGE_STORAGE_KEY = 'images';
-  
-  return {
-    storeImage: addImage,
-    images: getImages,
-    imageCache: images
-  }
+  function imageStore() {
 
-  ////////////
- 
-  function getImages() {
-    var img = window.localStorage.getItem(IMAGE_STORAGE_KEY);
-    if (img) {
-      images = JSON.parse(img);
-    } else {
-      images = [];
+    var images;
+    var IMAGE_STORAGE_KEY = 'images';
+    
+    return {
+      storeImage: addImage,
+      images: getImages,
+      imageCache: images
     }
-    return images;
+
+    ////////////
+   
+    function getImages() {
+      var img = window.localStorage.getItem(IMAGE_STORAGE_KEY);
+      if (img) {
+        images = JSON.parse(img);
+      } else {
+        images = [];
+      }
+      return images;
+    }
+   
+    function addImage(img) {
+      images.push(img);
+      window.localStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify(images));
+    }
   }
- 
-  function addImage(img) {
-    images.push(img);
-    window.localStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify(images));
-  }
-}
+
+})();

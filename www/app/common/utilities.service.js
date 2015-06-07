@@ -1,25 +1,30 @@
-angular
-  .module('starter')
-  .factory('utilities', utilities);
+(function() {
+  'use strict';
 
-function utilities() {
+  angular
+    .module('BlingMyCat')
+    .factory('utilities', utilities);
 
-  return {
-    makeId: makeId
-  }
+  function utilities() {
 
-  ////////////
-
-  function makeId() {
-    var text = '';
-    var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  
-    for (var i = 0; i < 20; i++) {
-      text += possible.charAt(Math.floor(Math.random() * possible.length));
+    return {
+      makeId: makeId
     }
 
-    text += Date.now();
+    ////////////
 
-    return text;
+    function makeId() {
+      var text = '';
+      var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    
+      for (var i = 0; i < 20; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+      }
+
+      text += Date.now();
+
+      return text;
+    }
   }
-}
+
+})();

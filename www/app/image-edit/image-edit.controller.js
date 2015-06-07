@@ -1,7 +1,12 @@
-angular
-  .module('starter')
-  .controller('ImageEditCtrl', ImageEditCtrl);
+(function() {
+  'use strict';
 
-function ImageEditCtrl($scope, $stateParams) {
-  $scope.currentImage = $stateParams.image;
-}
+  angular
+    .module('BlingMyCat')
+    .controller('ImageEditCtrl', ImageEditCtrl);
+
+  function ImageEditCtrl($scope, $stateParams) {
+    $scope.currentImage = $stateParams.image;
+  }
+
+})();

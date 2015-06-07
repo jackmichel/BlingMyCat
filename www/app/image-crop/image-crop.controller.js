@@ -1,10 +1,15 @@
-angular
-  .module('starter')
-  .controller('ImageCropCtrl', ImageCropCtrl);
+(function() {
+  'use strict';
 
-function ImageCropCtrl(camera) {
-  var vm = this;
+  angular
+    .module('BlingMyCat')
+    .controller('ImageCropCtrl', ImageCropCtrl);
 
-  vm.currentImage = camera.getCurrentImage();
+  function ImageCropCtrl(camera) {
+    var vm = this;
 
-}
+    vm.currentImage = camera.getCurrentImage();
+
+  }
+
+})();

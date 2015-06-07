@@ -1,48 +1,53 @@
-angular
-  .module('starter')
-  .factory('blob', blob);
+(function() {
+  'use strict';
 
-function blob() {
+  angular
+    .module('BlingMyCat')
+    .factory('blob', blob);
 
-  return {
-    canvasToBlob: canvasToBlob,
-    b64ToBlob: b64ToBlob
-  }
+  function blob() {
 
-  ////////////
+    return {
+      canvasToBlob: canvasToBlob,
+      b64ToBlob: b64ToBlob
+    }
 
-  function canvasToBlob(canvas, contentType) {
-    contentType = contentType || 'image/jpeg';
-    return b64ToBlob(canvas.toDataURL(contentType));
-  }
+    ////////////
 
-  function b64ToBlob(b64Data, contentType) {
+    function canvasToBlob(canvas, contentType) {
       contentType = contentType || 'image/jpeg';
+      return b64ToBlob(canvas.toDataURL(contentType));
+    }
 
-      var b64Data = b64Data.split(',')[1]; 
-      var sliceSize = 512;
-      var byteCharacters = decodeFromBase64(b64Data);
-      var byteArrays = [];
+    function b64ToBlob(b64Data, contentType) {
+        contentType = contentType || 'image/jpeg';
 
-      for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-          var slice = byteCharacters.slice(offset, offset + sliceSize);
+        var b64Data = b64Data.split(',')[1]; 
+        var sliceSize = 512;
+        var byteCharacters = decodeFromBase64(b64Data);
+        var byteArrays = [];
 
-          var byteNumbers = new Array(slice.length);
-          for (var i = 0; i < slice.length; i++) {
-              byteNumbers[i] = slice.charCodeAt(i);
-          }
+        for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+            var slice = byteCharacters.slice(offset, offset + sliceSize);
 
-          var byteArray = new Uint8Array(byteNumbers);
+            var byteNumbers = new Array(slice.length);
+            for (var i = 0; i < slice.length; i++) {
+                byteNumbers[i] = slice.charCodeAt(i);
+            }
 
-          byteArrays.push(byteArray);
-      }
+            var byteArray = new Uint8Array(byteNumbers);
 
-      var blob = new Blob(byteArrays, {type: contentType});
-      return blob;
+            byteArrays.push(byteArray);
+        }
+
+        var blob = new Blob(byteArrays, {type: contentType});
+        return blob;
+    }
+
+    function decodeFromBase64(input) {
+      input = input.replace(/\s/g, '');
+      return atob(input);
+    }
   }
 
-  function decodeFromBase64(input) {
-    input = input.replace(/\s/g, '');
-    return atob(input);
-  }
-}
+})();
