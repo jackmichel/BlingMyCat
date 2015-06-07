@@ -24,14 +24,16 @@
       return canvas;
     }
 
-    function addImg(canvas, imgSrc) {
+    function addImg(canvas, imgSrc, noCrop) {
+      noCrop = noCrop || false;
+
       var img = document.createElement('img');
       img.src = imgSrc;
 
-      img.onload = onImageLoad(canvas, img);
+      img.onload = onImageLoad(canvas, img, noCrop);
     }
 
-    function onImageLoad(canvas, img) {
+    function onImageLoad(canvas, img, noCrop) {
       return function() {
         var imgInstance = new fabric.Image(img, {
             top: 0,
@@ -49,6 +51,11 @@
           imgInstance.lockMovementY = true;
         } else {
           imgInstance.scaleToWidth(canvas.width + 1);
+          imgInstance.lockMovementX = true;
+        }
+
+        if (noCrop) {
+          imgInstance.lockMovementY = true;
           imgInstance.lockMovementX = true;
         }
 

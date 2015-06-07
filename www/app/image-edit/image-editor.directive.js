@@ -18,7 +18,7 @@
 
     function link(scope, element, attr) {
       var canvas = canvasUtilities.createCanvas(element.find('canvas')[0]);
-      canvasUtilities.addImg(canvas, scope.currentImage);
+      canvasUtilities.addImg(canvas, scope.currentImage, true);
 
       element.find('button').on('click', function() {
         var imageBlob = blob.canvasToBlob(canvas);
