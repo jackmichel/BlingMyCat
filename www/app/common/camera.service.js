@@ -24,14 +24,14 @@
           break;
       }
       return {
-        quality: 100,
+        quality: 80,
         destinationType: Camera.DestinationType.DATA_URL,
         sourceType: source,
         allowEdit: false,
         encodingType: Camera.EncodingType.JPEG,
         popoverOptions: CameraPopoverOptions,
-        targetWidth: 1280,
-        targetHeight: 1280,
+        targetWidth: 640,
+        targetHeight: 640,
         correctOrientation: true,
         saveToPhotoAlbum: true
       };
@@ -41,7 +41,7 @@
       var deferred = $q.defer();
 
       $cordovaCamera.getPicture(optionsForType(type)).then(function(dataUrl) {
-        deferred.resolve('data:image/jpeg;charset=utf-8;base64,' + dataUrl);
+        deferred.resolve('data:image/jpeg;base64,' + dataUrl);
       });
 
       return deferred.promise;
