@@ -5,7 +5,7 @@
     .module('BlingMyCat')
     .controller('ImageViewCtrl', ImageViewCtrl);
 
-  function ImageViewCtrl($ionicActionSheet, camera, imageStore, $state) {
+  function ImageViewCtrl($ionicActionSheet, $ionicViewSwitcher, camera, imageStore, $state) {
     var vm = this;
 
     vm.images = imageStore.images();
@@ -35,6 +35,7 @@
     }
 
     function editImage(imageName) {
+      $ionicViewSwitcher.nextDirection('forward');
       $state.go('image-edit', { image: urlForImage(imageName) });
     }
   }

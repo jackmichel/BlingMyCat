@@ -5,7 +5,7 @@
     .module('BlingMyCat')
     .directive('imageCroper', imageCroper);
 
-  function imageCroper(canvasUtilities, $state) {
+  function imageCroper(canvasUtilities, $state, $ionicViewSwitcher) {
 
     return {
       restrict: 'E',
@@ -23,6 +23,7 @@
       element.find('button').on('click', function() {
         var imageData = canvas.toDataURL('image/jpeg');
 
+        $ionicViewSwitcher.nextDirection('forward');
         $state.go('image-edit', { image: imageData });
       });
     }
