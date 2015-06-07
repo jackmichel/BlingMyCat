@@ -1,13 +1,13 @@
 <ion-view view-title="Bling My Cat">
   <ion-content>
-    <button class="button button-block button-energized" ng-click="imageview.addImage()">
+    <button class="button button-block button-energized" ng-click="view.addImage()">
       <i class="icon ion-plus-round"></i>
       New Bling
     </button>
     <div class="row wrap-row">
-      <div class="col col-33" ng-repeat="image in imageview.images">
-        <a nav-transition="ios" nav-direction="forward" href="#/image-edit/{{image}}">
-          <img class="col" ng-src="{{imageview.urlForImage(image)}}"/>       
+      <div class="col col-33" ng-repeat="image in view.images">
+        <a nav-transition="ios" nav-direction="forward" ng-click="view.editImage(image)">
+          <img class="col" ng-src="{{view.urlForImage(image)}}"/>       
         </a>
       </div>
     </div>

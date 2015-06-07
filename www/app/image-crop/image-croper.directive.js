@@ -5,7 +5,7 @@
     .module('BlingMyCat')
     .directive('imageCroper', imageCroper);
 
-  function imageCroper($cordovaFile, imageStore, blob, utilities, canvasUtilities) {
+  function imageCroper(canvasUtilities, $state) {
 
     return {
       restrict: 'E',
@@ -18,15 +18,12 @@
 
     function link(scope, element, attr) {
       var canvas = canvasUtilities.createCanvas(element.find('canvas')[0]);
-      canvasUtilities.addImgDataUrl(canvas, scope.currentImage);
+      canvasUtilities.addImg(canvas, scope.currentImage);
 
       element.find('button').on('click', function() {
-        var imageBlob = blob.canvasToBlob(canvas);
-        var newName = utilities.makeId();
+        var imageData = canvas.toDataURL('image/jpeg');
 
-        $cordovaFile.writeFile(cordova.file.dataDirectory, newName, imageBlob, true).then(function(e) {
-          imageStore.storeImage(newName);
-        });
+        $state.go('image-edit', { image: imageData });
       });
     }
 

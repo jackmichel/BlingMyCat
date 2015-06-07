@@ -5,8 +5,11 @@
     .module('BlingMyCat')
     .controller('ImageEditCtrl', ImageEditCtrl);
 
-  function ImageEditCtrl($scope, $stateParams) {
-    $scope.currentImage = $stateParams.image;
+  function ImageEditCtrl($stateParams, camera) {
+    var vm = this;
+
+    vm.currentImage = $stateParams.image;
+
   }
 
 })();

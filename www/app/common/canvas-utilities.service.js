@@ -9,8 +9,7 @@
 
     return {
       createCanvas: createCanvas,
-      addImgSrc: addImgSrc,
-      addImgDataUrl: addImgDataUrl
+      addImg: addImg
     }
 
     ////////////
@@ -25,19 +24,12 @@
       return canvas;
     }
 
-    function addImgSrc(canvas, imgSrc) {
+    function addImg(canvas, imgSrc) {
       var img = document.createElement('img');
-      img.src = cordova.file.dataDirectory + imgSrc;
+      img.src = imgSrc;
 
       img.onload = onImageLoad(canvas, img);
-    } 
-
-    function addImgDataUrl(canvas, imgDataUrl) {
-      var img = document.createElement('img');
-      img.src = 'data:image/jpeg;charset=utf-8;base64,' + imgDataUrl;
-
-      img.onload = onImageLoad(canvas, img);
-    } 
+    }
 
     function onImageLoad(canvas, img) {
       return function() {

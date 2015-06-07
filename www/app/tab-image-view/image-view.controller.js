@@ -5,18 +5,18 @@
     .module('BlingMyCat')
     .controller('ImageViewCtrl', ImageViewCtrl);
 
-  function ImageViewCtrl($ionicActionSheet, camera, imageStore) {
+  function ImageViewCtrl($ionicActionSheet, camera, imageStore, $state) {
     var vm = this;
 
     vm.images = imageStore.images();
     vm.urlForImage = urlForImage;
     vm.addImage = addImage;
+    vm.editImage = editImage;
 
     ////////////
 
     function urlForImage(imageName) {
-      var trueOrigin = cordova.file.dataDirectory + imageName;
-      return trueOrigin;
+      return cordova.file.dataDirectory + imageName;
     }
     
     function addImage(type) {
@@ -32,6 +32,10 @@
           hideSheet();
         }
       });
+    }
+
+    function editImage(imageName) {
+      $state.go('image-edit', { image: urlForImage(imageName) });
     }
   }
 

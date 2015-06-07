@@ -41,7 +41,7 @@
    
     function getImage(type) {
       $cordovaCamera.getPicture(optionsForType(type)).then(function(dataUrl) {
-        currentImage = dataUrl;
+        currentImage = 'data:image/jpeg;charset=utf-8;base64,' + dataUrl;
         $state.go('image-crop');
       });
     }

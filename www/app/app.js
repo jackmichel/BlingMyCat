@@ -36,7 +36,7 @@ angular.module('BlingMyCat', ['ionic', 'ngCordova'])
     views: {
       'tab-image-view': {
         templateUrl: 'app/tab-image-view/tab-image-view.html',
-        controller: 'ImageViewCtrl as imageview'
+        controller: 'ImageViewCtrl as view'
       }
     }
   })
@@ -53,13 +53,13 @@ angular.module('BlingMyCat', ['ionic', 'ngCordova'])
   .state('image-edit', {
     url: '/image-edit/:image',
     templateUrl: 'app/image-edit/image-edit.html',
-    controller: 'ImageEditCtrl'
+    controller: 'ImageEditCtrl as edit'
   })
 
   .state('image-crop', {
     url: '/image-crop',
     templateUrl: 'app/image-crop/image-crop.html',
-    controller: 'ImageCropCtrl as imagecrop'
+    controller: 'ImageCropCtrl as crop'
   });
 
   // if none of the above states are matched, use this as the fallback
