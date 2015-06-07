@@ -5,13 +5,10 @@
     .module('BlingMyCat')
     .factory('camera', camera);
    
-  function camera($cordovaCamera, imageStore, $q, $cordovaFile, utilities, $state) { 
-
-    var currentImage;
+  function camera($cordovaCamera, $q) { 
     
     return {
-      getImage: getImage,
-      getCurrentImage: getCurrentImage
+      getImage: getImage
     }
 
     //////////////
@@ -27,6 +24,7 @@
           break;
       }
       return {
+        quality: 100,
         destinationType: Camera.DestinationType.DATA_URL,
         sourceType: source,
         allowEdit: false,
@@ -40,15 +38,15 @@
     }
    
     function getImage(type) {
+      var deferred = $q.defer();
+
       $cordovaCamera.getPicture(optionsForType(type)).then(function(dataUrl) {
-        currentImage = 'data:image/jpeg;charset=utf-8;base64,' + dataUrl;
-        $state.go('image-crop');
+        deferred.resolve('data:image/jpeg;charset=utf-8;base64,' + dataUrl);
       });
+
+      return deferred.promise;
     }
 
-    function getCurrentImage() {
-      return currentImage;
-    }
   }
 
 })();

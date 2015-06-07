@@ -16,7 +16,7 @@
 
     function canvasToBlob(canvas, contentType) {
       contentType = contentType || 'image/jpeg';
-      return b64ToBlob(canvas.toDataURL(contentType));
+      return b64ToBlob(canvas.toDataURL(contentType, 1.0));
     }
 
     function b64ToBlob(b64Data, contentType) {

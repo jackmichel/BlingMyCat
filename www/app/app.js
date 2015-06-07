@@ -57,7 +57,7 @@ angular.module('BlingMyCat', ['ionic', 'ngCordova'])
   })
 
   .state('image-crop', {
-    url: '/image-crop',
+    url: '/image-edit/:image',
     templateUrl: 'app/image-crop/image-crop.html',
     controller: 'ImageCropCtrl as crop'
   });

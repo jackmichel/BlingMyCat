@@ -5,10 +5,10 @@
     .module('BlingMyCat')
     .controller('ImageCropCtrl', ImageCropCtrl);
 
-  function ImageCropCtrl(camera) {
+  function ImageCropCtrl($stateParams) {
     var vm = this;
 
-    vm.currentImage = camera.getCurrentImage();
+    vm.currentImage = $stateParams.image;
 
   }
 

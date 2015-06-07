@@ -28,8 +28,11 @@
         titleText: 'Add images',
         cancelText: 'Cancel',
         buttonClicked: function(index) {
-          camera.getImage(index);
           hideSheet();
+          camera.getImage(index).then(function(imgData) {
+            $ionicViewSwitcher.nextDirection('forward');
+            $state.go('image-crop', { image: imgData });
+          });
         }
       });
     }
