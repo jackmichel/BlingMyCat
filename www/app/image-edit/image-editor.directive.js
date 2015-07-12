@@ -21,6 +21,8 @@
       canvasUtilities.addImg(canvas, scope.currentImage, true);
 
       element.find('button').on('click', function() {
+        canvas.deactivateAll();
+        
         var imageBlob = blob.canvasToBlob(canvas);
         var newName = utilities.makeId();
 

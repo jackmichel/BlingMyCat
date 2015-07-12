@@ -21,6 +21,8 @@
       canvasUtilities.addImg(canvas, scope.currentImage);
 
       element.find('button').on('click', function() {
+        canvas.deactivateAll();
+        
         var imageData = canvas.toDataURL('image/jpeg', 1.0);
 
         $ionicViewSwitcher.nextDirection('forward');
