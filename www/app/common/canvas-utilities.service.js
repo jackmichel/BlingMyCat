@@ -43,9 +43,9 @@
         });
 
         imgInstance.set({
-          borderColor: 'gray',
+          borderColor: 'black',
           cornerColor: 'black',
-          cornerSize: 12,
+          cornerSize: 14,
           transparentCorners: true
         });
 
@@ -91,9 +91,9 @@
             left: 0
         });
         imgInstance.set({
-          borderColor: 'gray',
+          borderColor: 'black',
           cornerColor: 'black',
-          cornerSize: 12,
+          cornerSize: 14,
           transparentCorners: true
         });
         canvas.add(imgInstance);
