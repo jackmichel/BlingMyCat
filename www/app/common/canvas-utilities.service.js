@@ -9,7 +9,8 @@
 
     return {
       createCanvas: createCanvas,
-      addImg: addImg
+      addImg: addImg,
+      addBlingImg: addBlingImg
     }
 
     ////////////
@@ -24,16 +25,17 @@
       return canvas;
     }
 
-    function addImg(canvas, imgSrc, noCrop) {
+    function addImg(canvas, imgSrc, noCrop, noSelect) {
       noCrop = noCrop || false;
+      noSelect = noSelect || false; 
 
       var img = document.createElement('img');
       img.src = imgSrc;
 
-      img.onload = onImageLoad(canvas, img, noCrop);
+      img.onload = onImageLoad(canvas, img, noCrop, noSelect);
     }
 
-    function onImageLoad(canvas, img, noCrop) {
+    function onImageLoad(canvas, img, noCrop, noSelect) {
       return function() {
         var imgInstance = new fabric.Image(img, {
             top: 0,
@@ -59,8 +61,29 @@
           imgInstance.lockMovementX = true;
         }
 
+        if (noSelect) {
+          imgInstance.selectable = false;
+        }
+
         canvas.add(imgInstance);
 
+      };
+    }
+
+    function addBlingImg(canvas, imgSrc) {
+      var img = document.createElement('img');
+      img.src = imgSrc;
+
+      img.onload = onBlingLoad(canvas, img);
+    }
+
+    function onBlingLoad(canvas, img) {
+      return function() {
+        var imgInstance = new fabric.Image(img, {
+            top: 0,
+            left: 0
+        });
+        canvas.add(imgInstance);
       };
     }
   }

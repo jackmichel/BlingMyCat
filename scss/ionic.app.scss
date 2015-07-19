@@ -30,3 +30,13 @@ $ionicons-font-path: "../lib/ionic/fonts" !default;
   font-size: 24px;
   color: #000;
 }
+
+
+// Image Editor 
+.bling-container {
+  display: flex;
+
+  .bling {
+    max-width: 50px;
+  }
+}

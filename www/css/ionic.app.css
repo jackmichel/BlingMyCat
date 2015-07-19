@@ -7682,3 +7682,8 @@ a.button {
 .exit-photo-edit {
   font-size: 24px;
   color: #000; }
+
+.bling-container {
+  display: flex; }
+  .bling-container .bling {
+    max-width: 50px; }
