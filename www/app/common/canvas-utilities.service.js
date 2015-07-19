@@ -42,6 +42,13 @@
             left: 0
         });
 
+        imgInstance.set({
+          borderColor: 'gray',
+          cornerColor: 'black',
+          cornerSize: 12,
+          transparentCorners: true
+        });
+
         imgInstance.hasBorders = false;
         imgInstance.lockRotation = true;
         imgInstance.lockScalingX = true;
@@ -82,6 +89,12 @@
         var imgInstance = new fabric.Image(img, {
             top: 0,
             left: 0
+        });
+        imgInstance.set({
+          borderColor: 'gray',
+          cornerColor: 'black',
+          cornerSize: 12,
+          transparentCorners: true
         });
         canvas.add(imgInstance);
       };
