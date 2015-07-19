@@ -19,8 +19,24 @@
       var canvasWidth = window.screen.width;
       var canvasHeight = canvasWidth;
 
-      var canvas = new fabric.Canvas(element, { width: canvasWidth, height: canvasHeight });
+      var canvas = new fabric.Canvas(element, { 
+        width: canvasWidth, 
+        height: canvasHeight,
+        selection: false
+      });
       canvas.setBackgroundColor('rgba(0, 0, 0, 1.0)', canvas.renderAll.bind(canvas));
+
+      /* MAYBE USEFUL 
+      var lastActiveObject = null;
+
+      canvas.on('before:selection:cleared', function() {
+        lastActiveObject = canvas.getActiveObject();
+      });
+
+      canvas.on('selection:cleared', function() {
+        canvas.setActiveObject(lastActiveObject);
+      });
+      */
 
       return canvas;
     }
@@ -45,7 +61,7 @@
         imgInstance.set({
           borderColor: 'black',
           cornerColor: 'black',
-          cornerSize: 14,
+          cornerSize: 30,
           transparentCorners: true
         });
 
@@ -93,7 +109,7 @@
         imgInstance.set({
           borderColor: 'black',
           cornerColor: 'black',
-          cornerSize: 14,
+          cornerSize: 30,
           transparentCorners: true
         });
         canvas.add(imgInstance);
