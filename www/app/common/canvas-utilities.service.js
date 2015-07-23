@@ -104,14 +104,18 @@
       return function() {
         var imgInstance = new fabric.Image(img, {
             top: 0,
-            left: 0
+            left: 0, 
+            padding: 30
         });
+
         imgInstance.set({
           borderColor: 'black',
           cornerColor: 'black',
           cornerSize: 30,
           transparentCorners: true
         });
+
+        //imgInstance.hasControls = false;
         canvas.add(imgInstance);
       };
     }
