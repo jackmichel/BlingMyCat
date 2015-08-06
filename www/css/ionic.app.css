@@ -7684,6 +7684,10 @@ a.button {
   color: #000; }
 
 .bling-container {
-  display: flex; }
+  width: 100%;
+  overflow: scroll;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch; }
   .bling-container .bling {
-    max-width: 50px; }
+    max-width: 50px;
+    display: inline-block; }
