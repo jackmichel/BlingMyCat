@@ -9,7 +9,6 @@
     var vm = this;
 
     vm.currentImage = $stateParams.image;
-
   }
 
 })();

@@ -10,7 +10,7 @@
     return {
       restrict: 'E',
       scope: { currentImage: '=' },
-      template: '<canvas></canvas><button class="button button-block button-energized">Save</button>',
+      template: '<canvas></canvas><button class="button button-block button-energized save">Save</button>',
       link: link
     };
 
@@ -20,9 +20,9 @@
       var canvas = canvasUtilities.createCanvas(element.find('canvas')[0]);
       canvasUtilities.addImg(canvas, scope.currentImage);
 
-      element.find('button').on('click', function() {
+      element.find('button.save').on('click', function() {
         canvas.deactivateAll();
-        
+
         var imageData = canvas.toDataURL('image/jpeg', 1.0);
 
         $ionicViewSwitcher.nextDirection('forward');

@@ -20,9 +20,9 @@
       var canvas = canvasUtilities.createCanvas(element.find('canvas')[0]);
       canvasUtilities.addImg(canvas, scope.currentImage, true, true);
 
-      element.find('button').on('click', function() {
+      element.find('button.save').on('click', function() {
         canvas.deactivateAll();
-        
+
         var imageBlob = blob.canvasToBlob(canvas);
         var newName = utilities.makeId();
 
