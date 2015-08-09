@@ -5,7 +5,7 @@
     .module('BlingMyCat')
     .directive('imageEditor', imageEditor);
 
-  function imageEditor($cordovaFile, imageStore, blob, utilities, canvasUtilities) {
+  function imageEditor($cordovaFile, imageStore, blob, utilities, canvasUtilities, $ionicViewSwitcher, $state) {
 
     return {
       restrict: 'E',
@@ -28,6 +28,8 @@
 
         $cordovaFile.writeFile(cordova.file.dataDirectory, newName, imageBlob, true).then(function(e) {
           imageStore.storeImage(newName);
+          $ionicViewSwitcher.nextDirection('back');
+          $state.go('tab.image-view');
         });
       });
 

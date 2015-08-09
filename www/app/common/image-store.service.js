@@ -9,15 +9,14 @@
 
     var images;
     var IMAGE_STORAGE_KEY = 'images';
-    
+
     return {
       storeImage: addImage,
-      images: getImages,
-      imageCache: images
-    }
+      images: getImages
+    };
 
     ////////////
-   
+
     function getImages() {
       var img = window.localStorage.getItem(IMAGE_STORAGE_KEY);
       if (img) {
@@ -27,9 +26,9 @@
       }
       return images;
     }
-   
+
     function addImage(img) {
-      images.push(img);
+      images.unshift(img);
       window.localStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify(images));
     }
   }
