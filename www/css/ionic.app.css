@@ -7675,9 +7675,10 @@ a.button {
   -webkit-transition-duration: 0s;
   transition-duration: 0s; }
 
-.row {
-  -webkit-flex-wrap: wrap;
-  flex-wrap: wrap; }
+.blinged-image {
+  width: 100%; }
+  .blinged-image img {
+    width: 100%; }
 
 .exit-photo-edit {
   font-size: 24px;

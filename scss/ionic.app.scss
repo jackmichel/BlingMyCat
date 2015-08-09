@@ -21,9 +21,12 @@ $ionicons-font-path: "../lib/ionic/fonts" !default;
 // Include all of Ionic
 @import "www/lib/ionic/scss/ionic";
 
-.row {
-  -webkit-flex-wrap: wrap;
-  flex-wrap: wrap;
+.blinged-image {
+  width: 100%;
+
+  img {
+    width: 100%;
+  }
 }
 
 .exit-photo-edit {
@@ -32,7 +35,7 @@ $ionicons-font-path: "../lib/ionic/fonts" !default;
 }
 
 
-// Image Editor 
+// Image Editor
 .bling-container {
   width: 100%;
   overflow: scroll;

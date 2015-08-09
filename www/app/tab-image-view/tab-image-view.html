@@ -4,12 +4,10 @@
       <i class="icon ion-plus-round"></i>
       New Bling
     </button>
-    <div class="row wrap-row">
-      <div class="col col-33" ng-repeat="image in view.images">
-        <a nav-transition="ios" nav-direction="forward" ng-click="view.editImage(image)">
-          <img class="col" ng-src="{{view.urlForImage(image)}}"/>       
-        </a>
-      </div>
+    <div class="blinged-image" ng-repeat="image in view.images">
+      <a nav-transition="ios" nav-direction="forward" ng-click="view.editImage(image)">
+        <img ng-src="{{view.urlForImage(image)}}"/>
+      </a>
     </div>
   </ion-content>
 </ion-view>
