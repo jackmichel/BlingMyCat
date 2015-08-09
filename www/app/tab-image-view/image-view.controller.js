@@ -5,7 +5,7 @@
     .module('BlingMyCat')
     .controller('ImageViewCtrl', ImageViewCtrl);
 
-  function ImageViewCtrl($ionicActionSheet, $ionicViewSwitcher, camera, imageStore, $state, share) {
+  function ImageViewCtrl($ionicActionSheet, $ionicViewSwitcher, camera, imageStore, $state, share, $ionicLoading) {
     var vm = this;
 
     vm.images = imageStore.images();
@@ -30,10 +30,14 @@
         titleText: 'Add images',
         cancelText: 'Cancel',
         buttonClicked: function(index) {
+          $ionicLoading.show();
           hideSheet();
           camera.getImage(index).then(function(imgData) {
+            $ionicLoading.hide();
             $ionicViewSwitcher.nextDirection('forward');
             $state.go('image-crop', { image: imgData });
+          }).catch(function (err) {
+            $ionicLoading.hide();
           });
         }
       });

@@ -4,9 +4,9 @@
   angular
     .module('BlingMyCat')
     .factory('camera', camera);
-   
-  function camera($cordovaCamera, $q) { 
-    
+
+  function camera($cordovaCamera, $q) {
+
     return {
       getImage: getImage
     }
@@ -36,12 +36,14 @@
         saveToPhotoAlbum: true
       };
     }
-   
+
     function getImage(type) {
       var deferred = $q.defer();
 
       $cordovaCamera.getPicture(optionsForType(type)).then(function(dataUrl) {
         deferred.resolve('data:image/jpeg;base64,' + dataUrl);
+      }).catch(function (err) {
+        deferred.reject(err);
       });
 
       return deferred.promise;
