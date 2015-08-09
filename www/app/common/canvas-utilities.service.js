@@ -19,14 +19,14 @@
       var canvasWidth = window.screen.width;
       var canvasHeight = canvasWidth;
 
-      var canvas = new fabric.Canvas(element, { 
-        width: canvasWidth, 
+      var canvas = new fabric.Canvas(element, {
+        width: canvasWidth,
         height: canvasHeight,
         selection: false
       });
       canvas.setBackgroundColor('rgba(0, 0, 0, 1.0)', canvas.renderAll.bind(canvas));
 
-      /* MAYBE USEFUL 
+      /* MAYBE USEFUL
       var lastActiveObject = null;
 
       canvas.on('before:selection:cleared', function() {
@@ -43,7 +43,7 @@
 
     function addImg(canvas, imgSrc, noCrop, noSelect) {
       noCrop = noCrop || false;
-      noSelect = noSelect || false; 
+      noSelect = noSelect || false;
 
       var img = document.createElement('img');
       img.src = imgSrc;
@@ -66,6 +66,7 @@
         });
 
         imgInstance.hasBorders = false;
+        imgInstance.hasControls = false;
         imgInstance.lockRotation = true;
         imgInstance.lockScalingX = true;
         imgInstance.lockScalingY = true;
@@ -104,7 +105,7 @@
       return function() {
         var imgInstance = new fabric.Image(img, {
             top: 0,
-            left: 0, 
+            left: 0,
             padding: 30
         });
 
@@ -115,7 +116,6 @@
           transparentCorners: true
         });
 
-        //imgInstance.hasControls = false;
         canvas.add(imgInstance);
       };
     }
