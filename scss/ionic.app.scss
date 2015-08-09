@@ -21,11 +21,16 @@ $ionicons-font-path: "../lib/ionic/fonts" !default;
 // Include all of Ionic
 @import "www/lib/ionic/scss/ionic";
 
+.pane, .view {
+  background-color: #D9DBDC;
+}
+
 .blinged-image {
   width: 100%;
 
   img {
     width: 100%;
+    vertical-align: top;
   }
 }
 

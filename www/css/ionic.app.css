@@ -7675,10 +7675,14 @@ a.button {
   -webkit-transition-duration: 0s;
   transition-duration: 0s; }
 
+.pane, .view {
+  background-color: #D9DBDC; }
+
 .blinged-image {
   width: 100%; }
   .blinged-image img {
-    width: 100%; }
+    width: 100%;
+    vertical-align: top; }
 
 .exit-photo-edit {
   font-size: 24px;

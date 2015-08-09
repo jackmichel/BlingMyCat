@@ -10,7 +10,7 @@
     return {
       canvasToBlob: canvasToBlob,
       b64ToBlob: b64ToBlob
-    }
+    };
 
     ////////////
 
@@ -22,7 +22,7 @@
     function b64ToBlob(b64Data, contentType) {
         contentType = contentType || 'image/jpeg';
 
-        var b64Data = b64Data.split(',')[1]; 
+        b64Data = b64Data.split(',')[1];
         var sliceSize = 512;
         var byteCharacters = decodeFromBase64(b64Data);
         var byteArrays = [];
