@@ -24,7 +24,7 @@
           break;
       }
       return {
-        quality: 80,
+        quality: 100,
         destinationType: Camera.DestinationType.DATA_URL,
         sourceType: source,
         allowEdit: false,

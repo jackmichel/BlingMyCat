@@ -11,7 +11,7 @@
       createCanvas: createCanvas,
       addImg: addImg,
       addBlingImg: addBlingImg
-    }
+    };
 
     ////////////
 
